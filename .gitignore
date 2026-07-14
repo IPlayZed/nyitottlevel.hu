@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Local snapshots are deliberately kept outside the public repository.
+backups/
+
+# Superseded multilingual runtime files are preserved inside the snapshots above.
+locales/
+full-i18n.js
+language-data.js
+language-page.js
+languages.html
