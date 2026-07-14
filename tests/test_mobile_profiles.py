@@ -1,6 +1,7 @@
 import functools
 import http.server
 import json
+import os
 import pathlib
 import threading
 import unittest
@@ -41,7 +42,17 @@ class ChromiumMobileProfileTests(unittest.TestCase):
             viewport = descriptor["viewport"]
             size = (viewport["width"], viewport["height"])
             profiles_by_size.setdefault(size, (name, descriptor))
-        cls.profiles = [profiles_by_size[size] for size in sorted(profiles_by_size)]
+        all_profiles = [profiles_by_size[size] for size in sorted(profiles_by_size)]
+        cls.total_profile_count = len(all_profiles)
+        cls.shard_count = max(1, int(os.environ.get("VISUAL_TEST_SHARD_COUNT", "1")))
+        cls.shard_index = int(os.environ.get("VISUAL_TEST_SHARD_INDEX", "0"))
+        if not 0 <= cls.shard_index < cls.shard_count:
+            raise ValueError("VISUAL_TEST_SHARD_INDEX must be between 0 and VISUAL_TEST_SHARD_COUNT - 1")
+        cls.profiles = [
+            (profile_index, name, descriptor)
+            for profile_index, (name, descriptor) in enumerate(all_profiles, start=1)
+            if (profile_index - 1) % cls.shard_count == cls.shard_index
+        ]
         cls.artifact_root = ROOT / "test-artifacts" / "mobile"
         cls.artifact_root.mkdir(parents=True, exist_ok=True)
         cls.artifact_manifest = []
@@ -55,13 +66,24 @@ class ChromiumMobileProfileTests(unittest.TestCase):
         cls.thread.join(timeout=2)
         manifest = {
             "description": "Interactive screenshots and geometry analysis for every unique built-in Chromium mobile viewport",
-            "profile_count": len(cls.profiles),
+            "profile_count": len(cls.artifact_manifest),
+            "total_profile_count": cls.total_profile_count,
+            "shard_index": cls.shard_index,
+            "shard_count": cls.shard_count,
             "profiles": cls.artifact_manifest,
         }
-        (cls.artifact_root / "manifest.json").write_text(
+        manifest_name = (
+            "manifest.json"
+            if cls.shard_count == 1
+            else f"manifest-shard-{cls.shard_index + 1}-of-{cls.shard_count}.json"
+        )
+        destination = cls.artifact_root / manifest_name
+        temporary = destination.with_suffix(".json.tmp")
+        temporary.write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        temporary.replace(destination)
 
     def assert_inside(self, inner, outer, label, tolerance=1.5):
         self.assertGreaterEqual(inner["x"], outer["x"] - tolerance, f"{label} escapes left")
@@ -72,8 +94,8 @@ class ChromiumMobileProfileTests(unittest.TestCase):
         )
 
     def test_all_builtin_chromium_mobile_viewport_sizes_interactively(self):
-        self.assertGreaterEqual(len(self.profiles), 50)
-        for profile_index, (name, raw_descriptor) in enumerate(self.profiles, start=1):
+        self.assertGreaterEqual(self.total_profile_count, 50)
+        for profile_index, name, raw_descriptor in self.profiles:
             descriptor = {key: value for key, value in raw_descriptor.items() if key != "default_browser_type"}
             viewport = descriptor["viewport"]
             profile_label = f"{name} ({viewport['width']}×{viewport['height']})"
@@ -88,6 +110,7 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                 page.on("console", lambda message: errors.append(message.text) if message.type == "error" else None)
                 try:
                     page.goto(self.base_url, wait_until="domcontentloaded")
+                    page.add_style_tag(content=".skip-link,.reading-progress{display:none!important}")
                     screenshot_paths = {}
 
                     top_path = artifact_dir / "01-top.jpg"
@@ -130,10 +153,10 @@ class ChromiumMobileProfileTests(unittest.TestCase):
 
                     motion = page.locator("#motionToggle")
                     self.assertTrue(motion.is_visible(), profile_label)
-                    self.assertEqual(motion.locator(".button-label").inner_text(), "Animáció leállítása")
+                    self.assertEqual(motion.locator(".button-label").inner_text(), "Animációk leállítása")
                     motion.click()
                     self.assertEqual(motion.get_attribute("aria-pressed"), "true")
-                    self.assertEqual(motion.locator(".button-label").inner_text(), "Animáció indítása")
+                    self.assertEqual(motion.locator(".button-label").inner_text(), "Animációk indítása")
 
                     menu = page.locator("#menuButton")
                     if menu.is_visible():
@@ -200,19 +223,62 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     page.locator("mail-story .interactive-card").screenshot(path=str(mail_path), type="jpeg", quality=58)
                     screenshot_paths["mail_recipient_key"] = str(mail_path.relative_to(ROOT))
 
-                    page.locator('encryption-layers [data-encryption="userRest"]').click()
-                    diagram = page.locator("encryption-layers .crypto-diagram").bounding_box()
-                    route_margins = []
-                    for index, packet in enumerate(page.locator("encryption-layers .crypto-packet").all()):
-                        packet_box = packet.bounding_box()
-                        self.assert_inside(packet_box, diagram, f"{profile_label}: route label {index + 1}")
-                        route_margins.append(round(min(
-                            packet_box["x"] - diagram["x"],
-                            diagram["x"] + diagram["width"] - packet_box["x"] - packet_box["width"],
-                        ), 2))
-                    encryption_path = artifact_dir / "06-encryption-user-key.jpg"
-                    page.locator("encryption-layers .encryption-shell").screenshot(path=str(encryption_path), type="jpeg", quality=58)
-                    screenshot_paths["encryption_user_key"] = str(encryption_path.relative_to(ROOT))
+                    encryption_label_margins = []
+                    for mode in ("https", "providerRest", "userRest", "e2ee"):
+                        page.locator(f'encryption-layers [data-encryption="{mode}"]').click()
+                        diagram = page.locator("encryption-layers .crypto-diagram").bounding_box()
+                        labels = page.locator(
+                            "encryption-layers .crypto-packet:visible, "
+                            "encryption-layers .crypto-key-chip:visible, "
+                            "encryption-layers .crypto-access-state:visible"
+                        )
+                        for index, label in enumerate(labels.all()):
+                            label_box = label.bounding_box()
+                            self.assert_inside(
+                                label_box,
+                                diagram,
+                                f"{profile_label}: {mode} diagram label {index + 1}",
+                            )
+                            encryption_label_margins.append(round(min(
+                                label_box["x"] - diagram["x"],
+                                diagram["x"] + diagram["width"] - label_box["x"] - label_box["width"],
+                            ), 2))
+                        graphics = page.locator(
+                            "encryption-layers .crypto-device:visible, "
+                            "encryption-layers .crypto-server:visible, "
+                            "encryption-layers .crypto-database:visible"
+                        )
+                        for index, graphic in enumerate(graphics.all()):
+                            graphic_box = graphic.bounding_box()
+                            self.assertGreaterEqual(
+                                graphic_box["x"],
+                                diagram["x"] + 6,
+                                f"{profile_label}: {mode} graphic {index + 1} lacks left shadow clearance",
+                            )
+                            self.assertLessEqual(
+                                graphic_box["x"] + graphic_box["width"],
+                                diagram["x"] + diagram["width"] - 6,
+                                f"{profile_label}: {mode} graphic {index + 1} lacks right shadow clearance",
+                            )
+                        states = [
+                            state.bounding_box()
+                            for state in page.locator("encryption-layers .crypto-access-state:visible").all()
+                        ]
+                        if len(states) == 2:
+                            first, second = states
+                            separated = (
+                                first["x"] + first["width"] <= second["x"]
+                                or second["x"] + second["width"] <= first["x"]
+                                or first["y"] + first["height"] <= second["y"]
+                                or second["y"] + second["height"] <= first["y"]
+                            )
+                            self.assertTrue(separated, f"{profile_label}: {mode} access-state chips overlap")
+                        if mode == "userRest":
+                            encryption_path = artifact_dir / "06-encryption-user-key.jpg"
+                            page.locator("encryption-layers .encryption-shell").screenshot(
+                                path=str(encryption_path), type="jpeg", quality=58
+                            )
+                            screenshot_paths["encryption_user_key"] = str(encryption_path.relative_to(ROOT))
 
                     magnifier_path = artifact_dir / "07-rare-result-magnifier.jpg"
                     page.locator("detection-lab .rate-magnifier").screenshot(path=str(magnifier_path), type="jpeg", quality=62)
@@ -230,6 +296,28 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     screenshot_paths["help_directory"] = str(connection_path.relative_to(ROOT))
                     visible_connection_cards = page.locator("#kapcsolodas [data-connection-card]:visible").count()
                     self.assertEqual(visible_connection_cards, 6)
+
+                    page.locator("vote-explorer").scroll_into_view_if_needed()
+                    page.wait_for_timeout(50)
+                    vote_picker = page.locator("vote-explorer .vote-picker")
+                    active_vote = vote_picker.locator('[aria-selected="true"]')
+                    self.assert_inside(active_vote.bounding_box(), vote_picker.bounding_box(), f"{profile_label}: active vote tab")
+                    initial_member_count = page.locator("vote-explorer .member-grid article").count()
+                    expected_member_limit = 10 if viewport["width"] <= 600 else 48
+                    self.assertLessEqual(initial_member_count, expected_member_limit, profile_label)
+                    vote_path = artifact_dir / "10-vote-explorer.jpg"
+                    page.locator("vote-explorer .vote-explorer-shell").screenshot(path=str(vote_path), type="jpeg", quality=58)
+                    screenshot_paths["vote_explorer"] = str(vote_path.relative_to(ROOT))
+
+                    safeguard_shell = page.locator("safeguard-builder .safeguard-shell")
+                    safeguard_shell_box = safeguard_shell.bounding_box()
+                    self.assert_inside(page.locator("safeguard-builder .safeguard-visual").bounding_box(), safeguard_shell_box, f"{profile_label}: safeguard visual")
+                    self.assert_inside(page.locator("safeguard-builder .safeguard-options").bounding_box(), safeguard_shell_box, f"{profile_label}: safeguard options")
+                    for index, option in enumerate(page.locator("safeguard-builder [data-safeguard]").all()):
+                        self.assert_inside(option.bounding_box(), safeguard_shell_box, f"{profile_label}: safeguard option {index + 1}")
+                    safeguard_path = artifact_dir / "11-safeguards.jpg"
+                    safeguard_shell.screenshot(path=str(safeguard_path), type="jpeg", quality=58)
+                    screenshot_paths["safeguards"] = str(safeguard_path.relative_to(ROOT))
 
                     readable_selector = ",".join((
                         ".mail-e2ee-no-key b", ".mail-e2ee-no-key span", ".mail-e2ee-key b",
@@ -270,6 +358,7 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     )
                     self.assertEqual(errors, [], f"{profile_label}: browser errors {errors}")
                     self.artifact_manifest.append({
+                        "profile_index": profile_index,
                         "name": name,
                         "viewport": viewport,
                         "screenshots": screenshot_paths,
@@ -277,10 +366,11 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                             "horizontal_overflow_px": overflow,
                             "minimum_action_copy_to_button_gap_px": min(action_gaps),
                             "recipient_key_clearance_px": round(key_clearance, 2),
-                            "minimum_route_label_edge_margin_px": min(route_margins),
+                            "minimum_encryption_label_edge_margin_px": min(encryption_label_margins),
                             "minimum_readable_helper_font_px": min(readable_sizes),
                             "minimum_diagram_label_font_px": min(diagram_sizes),
                             "visible_help_directory_cards": visible_connection_cards,
+                            "initial_vote_member_cards": initial_member_count,
                             "opened_letter_sheet_rise_px": round(letter_box["y"] - sheet_box["y"], 2),
                             "horizontal_overflow_sources": overflow_sources,
                             "browser_errors": errors,

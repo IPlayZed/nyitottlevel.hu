@@ -81,6 +81,66 @@ class SiteTests(unittest.TestCase):
         self.assertTrue(issue_template.is_file())
         self.assertIn("Visszajelzés az oldalról", issue_template.read_text(encoding="utf-8"))
 
+    def test_static_security_policy_and_external_link_invariants(self):
+        csp = self.page.locator('meta[http-equiv="Content-Security-Policy"]').get_attribute("content")
+        for directive in ("default-src 'self'", "object-src 'none'", "base-uri 'none'", "form-action 'none'"):
+            self.assertIn(directive, csp)
+        self.assertNotIn("upgrade-insecure-requests", csp)
+        self.assertEqual(self.page.locator('meta[name="referrer"]').get_attribute("content"), "no-referrer")
+
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("Enforce HTTPS", readme)
+        self.assertIn("GitHub Pages does not provide repository-controlled custom response headers", readme)
+
+        for link in self.page.locator('a[target="_blank"]').all():
+            self.assertTrue(link.get_attribute("href").startswith("https://"))
+            self.assertIn("noreferrer", link.get_attribute("rel") or "")
+        self.assertEqual(self.page.locator('[onclick], [onerror], [onload], a[href^="javascript:"]').count(), 0)
+        self.assertEqual(self.page.locator('script[src^="http"], link[rel="stylesheet"][href^="http"], img[src^="http"], iframe').count(), 0)
+
+    def test_committed_data_templates_escape_text_and_reject_unsafe_urls(self):
+        self.page.evaluate(
+            """() => {
+              const payload = '<img src=x onerror=alert(1)>';
+              window.CHAT_CONTROL_VOTES = [{
+                key: 'malicious', short_date: payload, title: payload, body: payload,
+                question: payload, meaning: payload, result_label: payload,
+                totals: { FOR: 1, AGAINST: 0, ABSTENTION: 0, DID_NOT_VOTE: null },
+                position_labels: { FOR: payload, AGAINST: 'Nem', ABSTENTION: 'Tartózkodott', DID_NOT_VOTE: 'Nem szavazott' },
+                members: [{ name: payload, country: '<b>HU</b>', group: payload, position: 'FOR' }],
+                group_stats: [{ group: payload, label: payload, stats: { FOR: 1 } }],
+                official_source: 'javascript:alert(1)', explore_source: 'http://unsafe.example/'
+              }];
+              const explorer = document.querySelector('vote-explorer');
+              explorer.voteKey = 'malicious';
+              explorer.view = 'members';
+              explorer.render();
+            }"""
+        )
+        explorer = self.page.locator("vote-explorer")
+        self.assertEqual(explorer.locator("img, script, [onerror], [onclick]").count(), 0)
+        self.assertIn("<img src=x onerror=alert(1)>", explorer.inner_text())
+        for link in explorer.locator(".vote-sources a").all():
+            self.assertEqual(link.get_attribute("href"), "#")
+
+        self.page.evaluate(
+            """() => {
+              const payload = '<img src=x onerror=alert(2)>';
+              const quiz = document.querySelector('myth-quiz');
+              quiz.questions = [{ id: 'malicious', category: 'test', categoryLabel: payload, statement: payload, detail: payload, answer: true }];
+              quiz.index = 0;
+              quiz.score = 0;
+              quiz.answered = false;
+              quiz.render();
+            }"""
+        )
+        quiz = self.page.locator("myth-quiz")
+        self.assertEqual(quiz.locator("img, script, [onerror], [onclick]").count(), 0)
+        self.assertIn("<img src=x onerror=alert(2)>", quiz.inner_text())
+        quiz.locator('[data-answer="true"]').click()
+        self.assertEqual(quiz.locator("img, script, [onerror], [onclick]").count(), 0)
+        self.assertIn("<img src=x onerror=alert(2)>", quiz.locator(".quiz-feedback").inner_text())
+
     def test_mail_story_and_version_switcher(self):
         self.assertEqual(self.page.locator(".moving-letter .letter-flap").count(), 1)
         self.assertEqual(self.page.locator(".moving-letter .letter-pocket").count(), 1)
@@ -120,7 +180,8 @@ class SiteTests(unittest.TestCase):
         self.assertIn("a címzett kulcsával", comparison)
         explanation = mail_story.locator(".mail-copy").inner_text().lower()
         self.assertIn("kulcs nélkül", explanation)
-        self.assertIn("címzett készüléke", explanation)
+        self.assertIn("a címzett egyik", explanation)
+        self.assertIn("megfelelő kulccsal rendelkező készüléke", explanation)
         self.page.get_by_role("tab", name="2.0 · tervezett").click()
         self.assertEqual(self.page.locator("version-switcher h3").inner_text(), "Chat Control 2.0")
         self.assertIn("nincs végleges megállapodás", self.page.locator("version-switcher").inner_text().lower())
@@ -147,7 +208,7 @@ class SiteTests(unittest.TestCase):
         self.assertIn("is-flipped", parliament.get_attribute("class"))
         self.assertIn("Célzottabb végzések", parliament.locator(".institution-card__back").inner_text())
         self.page.get_by_role("tab", name="Beszélgetés értelmezése").click()
-        self.assertIn("teljes levelezés", self.page.locator("detection-lab .lab-copy h3").inner_text())
+        self.assertIn("teljes beszélgetés", self.page.locator("detection-lab .lab-copy h3").inner_text())
         slider = self.page.locator("#falseRate")
         self.page.locator("#falseRate").fill("1")
         self.assertEqual(slider.input_value(), "1")
@@ -168,6 +229,10 @@ class SiteTests(unittest.TestCase):
         self.assertEqual(self.page.locator("detection-lab [data-tn]").inner_text().replace("\xa0", "").replace(" ", ""), "9801")
         self.assertEqual(self.page.locator("detection-lab [data-specificity]").inner_text(), "99,0%")
         self.assertEqual(self.page.locator("detection-lab [data-ppv]").inner_text(), "41,4%")
+        self.page.locator("#prevalence").fill("100")
+        self.assertEqual(self.page.locator("detection-lab [data-fp]").inner_text(), "0")
+        self.assertEqual(self.page.locator("detection-lab [data-tn]").inner_text(), "0")
+        self.assertEqual(self.page.locator("detection-lab [data-specificity]").inner_text(), "Nem értelmezhető")
         self.assertEqual(self.page.locator(".population-canvas").count(), 1)
         self.page.get_by_role("tab", name="Újságíró", exact=True).click()
         self.assertIn("visszaélés bizonyítékát", self.page.locator("privacy-room h3").inner_text())
@@ -264,7 +329,7 @@ class SiteTests(unittest.TestCase):
         self.assertIn("Twitter", self.page.locator("abuse-history").inner_text())
 
     def test_vote_quiz_dialog_and_motion_control(self):
-        self.page.get_by_role("button", name="Számoljuk meg a 314-et").click()
+        self.page.get_by_role("button", name="Mutasd a 314 szavazatot").click()
         self.assertTrue(self.page.locator(".vote-explainer").is_visible())
         self.assertIn("46 hiányzott", self.page.locator("[data-run-vote]").inner_text())
         statement = self.page.locator("myth-quiz .quiz-card h3").inner_text()
@@ -289,6 +354,11 @@ class SiteTests(unittest.TestCase):
         self.assertLess(vote_order.index("vote-explorer"), vote_order.index("vote-threshold-intro"))
         self.assertLess(vote_order.index("vote-threshold-intro"), vote_order.index("vote-simulator"))
         self.assertEqual(self.page.locator("vote-explorer [data-vote-key]").count(), 5)
+        self.page.locator('vote-explorer [data-vote-key="2023-libe-position"]').click()
+        self.assertEqual(self.page.locator("vote-explorer .vote-total-cards > div").last.locator("b").inner_text(), "—")
+        self.page.locator("vote-explorer [data-hungarian-filter]").click()
+        self.assertIn("Katalin Cseh", self.page.locator("vote-explorer .member-grid").inner_text())
+        self.page.locator('vote-explorer [data-vote-key="2026-july-rejection"]').click()
         self.page.locator("vote-explorer [data-hungarian-filter]").click()
         members = self.page.locator("vote-explorer .member-grid article")
         self.assertGreater(members.count(), 0)
@@ -324,8 +394,8 @@ class SiteTests(unittest.TestCase):
             )
             self.page.locator(f"myth-quiz [data-answer='{str(current_answer).lower()}']").click()
             self.page.locator("myth-quiz [data-next-question]").click()
-        self.assertTrue(self.page.get_by_role("button", name="Új 10 kérdés").is_visible())
-        self.page.get_by_role("button", name="Új 10 kérdés").click()
+        self.assertTrue(self.page.get_by_role("button", name="10 új kérdés").is_visible())
+        self.page.get_by_role("button", name="10 új kérdés").click()
         second_ids = self.page.evaluate("() => document.querySelector('myth-quiz').questions.map(question => question.id)")
         self.assertEqual(len(set(first_ids).intersection(second_ids)), 0)
 
@@ -333,9 +403,9 @@ class SiteTests(unittest.TestCase):
         self.page.set_viewport_size({"width": 390, "height": 844})
         motion = self.page.locator("#motionToggle")
         self.assertTrue(motion.is_visible())
-        self.assertEqual(motion.locator(".button-label").inner_text(), "Animáció leállítása")
+        self.assertEqual(motion.locator(".button-label").inner_text(), "Animációk leállítása")
         motion.click()
-        self.assertEqual(motion.locator(".button-label").inner_text(), "Animáció indítása")
+        self.assertEqual(motion.locator(".button-label").inner_text(), "Animációk indítása")
         self.assertEqual(motion.get_attribute("aria-pressed"), "true")
         self.page.locator("#menuButton").click()
         self.assertEqual(self.page.locator("#menuButton").get_attribute("aria-expanded"), "true")
@@ -361,7 +431,7 @@ class SiteTests(unittest.TestCase):
         encryption = self.page.locator("encryption-layers")
         self.assertEqual(encryption.get_by_role("tab").count(), 4)
         encryption.get_by_role("tab", name="Végponttól végpontig · E2EE").click()
-        self.assertIn("nem kap tartalomfeloldó kulcsot", encryption.locator(".encryption-copy").inner_text().lower())
+        self.assertIn("nem kap a tartalom feloldásához szükséges kulcsot", encryption.locator(".encryption-copy").inner_text().lower())
         self.assertEqual(encryption.locator(".crypto-key-chip.has-key").count(), 2)
         self.assertNotIn("🔒", encryption.inner_text())
         self.assertNotIn("🔑", encryption.inner_text())
@@ -402,10 +472,10 @@ class SiteTests(unittest.TestCase):
 
     def test_hungarian_copy_is_responsive(self):
         checks = {
-            "mail-story .mail-opening-label": "A postás felnyitja",
+            "mail-story .mail-opening-label": "A postás elolvassa",
             ".private-talks h3": "A magánbeszélgetés attól még nem nyilvános, hogy digitális eszköz közvetíti",
             ".vote-chronology h3": "Mi történt, és melyik „Chat Controlról” döntöttek?",
-            ".footer-brand div > span": "Aggódó állampolgári ismeretterjesztő oldal.",
+            ".footer-brand div > span": "Egy aggódó állampolgár ismeretterjesztő oldala.",
         }
         self.page.set_viewport_size({"width": 390, "height": 844})
         self.page.goto(f"{self.base_url}/?lang=en", wait_until="networkidle")

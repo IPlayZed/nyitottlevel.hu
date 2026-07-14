@@ -1,6 +1,7 @@
 import functools
 import http.server
 import json
+import os
 import pathlib
 import threading
 import unittest
@@ -42,6 +43,16 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
         )
         cls.artifact_root = ROOT / "test-artifacts" / "desktop"
         cls.artifact_root.mkdir(parents=True, exist_ok=True)
+        cls.total_profile_count = len(VIEWPORTS)
+        cls.shard_count = max(1, int(os.environ.get("VISUAL_TEST_SHARD_COUNT", "1")))
+        cls.shard_index = int(os.environ.get("VISUAL_TEST_SHARD_INDEX", "0"))
+        if not 0 <= cls.shard_index < cls.shard_count:
+            raise ValueError("VISUAL_TEST_SHARD_INDEX must be between 0 and VISUAL_TEST_SHARD_COUNT - 1")
+        cls.viewports = [
+            (profile_index, viewport)
+            for profile_index, viewport in enumerate(VIEWPORTS, start=1)
+            if (profile_index - 1) % cls.shard_count == cls.shard_index
+        ]
         cls.manifest = []
 
     @classmethod
@@ -51,11 +62,21 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
         cls.server.shutdown()
         cls.server.server_close()
         cls.thread.join(timeout=2)
-        (cls.artifact_root / "manifest.json").write_text(
+        manifest_name = (
+            "manifest.json"
+            if cls.shard_count == 1
+            else f"manifest-shard-{cls.shard_index + 1}-of-{cls.shard_count}.json"
+        )
+        destination = cls.artifact_root / manifest_name
+        temporary = destination.with_suffix(".json.tmp")
+        temporary.write_text(
             json.dumps(
                 {
                     "description": "Stateful screenshots and geometry analysis for the desktop support matrix",
-                    "profile_count": len(VIEWPORTS),
+                    "profile_count": len(cls.manifest),
+                    "total_profile_count": cls.total_profile_count,
+                    "shard_index": cls.shard_index,
+                    "shard_count": cls.shard_count,
                     "profiles": cls.manifest,
                 },
                 ensure_ascii=False,
@@ -63,9 +84,18 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
+        temporary.replace(destination)
+
+    def assert_inside(self, inner, outer, label, tolerance=1.5):
+        self.assertGreaterEqual(inner["x"], outer["x"] - tolerance, f"{label} escapes left")
+        self.assertLessEqual(
+            inner["x"] + inner["width"],
+            outer["x"] + outer["width"] + tolerance,
+            f"{label} escapes right",
+        )
 
     def test_desktop_support_matrix_with_clicked_and_scrolled_states(self):
-        for name, width, height in VIEWPORTS:
+        for profile_index, (name, width, height) in self.viewports:
             with self.subTest(profile=name):
                 context = self.browser.new_context(viewport={"width": width, "height": height})
                 page = context.new_page()
@@ -76,6 +106,7 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                 artifact_dir.mkdir(parents=True, exist_ok=True)
                 try:
                     page.goto(self.base_url, wait_until="networkidle")
+                    page.add_style_tag(content=".skip-link,.reading-progress{display:none!important}")
                     screenshots = {}
 
                     def capture(key, filename, selector=None):
@@ -126,13 +157,66 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                     }""")
                     capture("mail_recipient_key", "05-mail-recipient-key.jpg", "mail-story .interactive-card")
 
-                    page.locator('encryption-layers [data-encryption="userRest"]').click()
-                    capture("user_key_encryption", "06-user-key-encryption.jpg", "encryption-layers .encryption-shell")
+                    encryption_label_margins = []
+                    encryption_captures = {
+                        "https": ("transport_encryption", "06a-transport-encryption.jpg"),
+                        "providerRest": ("provider_key_encryption", "06b-provider-key-encryption.jpg"),
+                        "userRest": ("user_key_encryption", "06c-user-key-encryption.jpg"),
+                        "e2ee": ("e2ee_encryption", "06d-e2ee-encryption.jpg"),
+                    }
+                    for mode, (key, filename) in encryption_captures.items():
+                        page.locator(f'encryption-layers [data-encryption="{mode}"]').click()
+                        capture(key, filename, "encryption-layers .encryption-shell")
+                        diagram = page.locator("encryption-layers .crypto-diagram").bounding_box()
+                        labels = page.locator(
+                            "encryption-layers .crypto-packet:visible, "
+                            "encryption-layers .crypto-key-chip:visible, "
+                            "encryption-layers .crypto-access-state:visible"
+                        )
+                        for index, label in enumerate(labels.all()):
+                            label_box = label.bounding_box()
+                            self.assert_inside(label_box, diagram, f"{name}: {mode} diagram label {index + 1}")
+                            encryption_label_margins.append(round(min(
+                                label_box["x"] - diagram["x"],
+                                diagram["x"] + diagram["width"] - label_box["x"] - label_box["width"],
+                            ), 2))
+                        graphics = page.locator(
+                            "encryption-layers .crypto-device:visible, "
+                            "encryption-layers .crypto-server:visible, "
+                            "encryption-layers .crypto-database:visible"
+                        )
+                        for index, graphic in enumerate(graphics.all()):
+                            graphic_box = graphic.bounding_box()
+                            self.assertGreaterEqual(
+                                graphic_box["x"],
+                                diagram["x"] + 6,
+                                f"{name}: {mode} graphic {index + 1} lacks left shadow clearance",
+                            )
+                            self.assertLessEqual(
+                                graphic_box["x"] + graphic_box["width"],
+                                diagram["x"] + diagram["width"] - 6,
+                                f"{name}: {mode} graphic {index + 1} lacks right shadow clearance",
+                            )
+                        states = [
+                            state.bounding_box()
+                            for state in page.locator("encryption-layers .crypto-access-state:visible").all()
+                        ]
+                        if len(states) == 2:
+                            first, second = states
+                            separated = (
+                                first["x"] + first["width"] <= second["x"]
+                                or second["x"] + second["width"] <= first["x"]
+                                or first["y"] + first["height"] <= second["y"]
+                                or second["y"] + second["height"] <= first["y"]
+                            )
+                            self.assertTrue(separated, f"{name}: {mode} access-state chips overlap")
                     capture("rare_results", "07-rare-results.jpg", "detection-lab .rate-magnifier")
                     page.locator('surveillance-contrast [data-surveillance="mass"]').click()
                     capture("mass_surveillance", "08-mass-surveillance.jpg", "surveillance-contrast .surveillance-shell")
                     page.locator('[data-connection-filter="help"]').click()
                     capture("help_directory", "09-help-directory.jpg", "#kapcsolodas .connection-explorer")
+                    capture("vote_explorer", "10-vote-explorer.jpg", "vote-explorer .vote-explorer-shell")
+                    capture("safeguards", "11-safeguards.jpg", "safeguard-builder .safeguard-shell")
 
                     action_gaps = []
                     for card in page.locator(".action-grid article").all():
@@ -151,6 +235,7 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                     self.assertEqual(page.locator("#kapcsolodas [data-connection-card]:visible").count(), 6)
                     self.manifest.append(
                         {
+                            "profile_index": profile_index,
                             "name": name,
                             "viewport": {"width": width, "height": height},
                             "screenshots": screenshots,
@@ -158,6 +243,7 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                                 "horizontal_overflow_px": overflow,
                                 "minimum_action_copy_to_button_gap_px": round(min(action_gaps), 2),
                                 "minimum_readable_helper_font_px": min(helper_sizes),
+                                "minimum_encryption_label_edge_margin_px": min(encryption_label_margins),
                                 "opened_letter_sheet_rise_px": round(letter_box["y"] - sheet_box["y"], 2),
                                 "browser_errors": errors,
                             },

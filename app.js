@@ -35,9 +35,9 @@ class ReactiveElement extends HTMLElement {
 
 const mailSteps = [
   {
-    label: "A nyitott lap",
-    title: "Ami nincs lezárva, azt a postás is elolvashatja",
-    body: "Egy képeslap szövege szabad szemmel látható. A hagyományos, nem végpontok között titkosított üzenetnél a szolgáltató gépe is hozzáférhet a tartalomhoz.",
+    label: "Nincs végponti zár",
+    title: "A szolgáltatónál olvasható üzenethez nincs szükség külön feltörésre",
+    body: "Egy nyitva átadott boríték tartalmát a postás külön kulcs nélkül el tudja olvasni. Hasonlóan, a nem végpontok között titkosított üzenetet a szolgáltató rendszere olvasható formában kezelheti.",
     note: "Találkozunk 6-kor a parkban?",
     open: true,
     lock: false,
@@ -47,7 +47,7 @@ const mailSteps = [
   {
     label: "A lezárt boríték · kulcs nélkül olvashatatlan",
     title: "A végpontok közötti titkosításnál kulcs nélkül csak értelmetlen jelsor látszik",
-    body: "A küldő telefonja az olvasható üzenetet titkosított jelsorrá alakítja. Ha a postás, a szolgáltató vagy egy támadó kulcs nélkül próbálja megnyitni, csak összekuszált karaktereket lát. Az eredeti mondatot kizárólag a címzett készüléke tudja visszaállítani a rajta lévő kulccsal.",
+    body: "A küldő telefonja az olvasható üzenetet titkosított jelsorrá alakítja. Ha a postás, a szolgáltató vagy egy támadó kulcs nélkül próbálja megnyitni, csak összekuszált karaktereket lát. Az eredeti mondatot a címzett egyik, megfelelő kulccsal rendelkező készüléke tudja visszaállítani.",
     note: "Találkozunk 6-kor a parkban?",
     cipher: "7F A9 C2 10 · 4D 8B E1 6C",
     open: false,
@@ -58,7 +58,7 @@ const mailSteps = [
   },
   {
     label: "Ellenőrzés útközben",
-    title: "A lezárt levelet útközben csak felnyitva lehet átvizsgálni",
+    title: "A lezárt levél tartalmát útközben csak felnyitás után lehet átvizsgálni",
     body: "Ha a szolgáltató szerverén akarják ellenőrizni a tartalmat, hozzáférés kell a tiszta szöveghez vagy képhez. Ezzel a zár eredeti biztonsági ígérete megváltozik.",
     note: "A tartalomhoz hozzáférés szükséges.",
     open: true,
@@ -110,7 +110,7 @@ class MailStory extends ReactiveElement {
                 ${item.cipher ? `<span class="mail-note-cipher">${item.cipher}</span>` : ""}
                 <span class="mail-note-plain">${item.note}</span>
               </div>
-              ${state.mailStep === 0 ? '<span class="mail-opening-label">A postás felnyitja</span>' : ""}
+              ${state.mailStep === 0 ? '<span class="mail-opening-label">A postás elolvassa</span>' : ""}
               ${item.lock ? '<span class="mail-lock"></span>' : ""}
             </div>
             ${item.encrypted ? `
@@ -121,7 +121,7 @@ class MailStory extends ReactiveElement {
               </div>
               <div class="mail-e2ee-key">
                 <i aria-hidden="true"></i>
-                <span><b>Kulcs a címzett készülékén</b><small>Csak ezzel áll helyre az üzenet</small></span>
+                <span><b>Kulcs a címzett egyik készülékén</b><small>Csak ilyen kulccsal áll helyre az üzenet</small></span>
               </div>
               <i class="mail-e2ee-key-traveller" aria-hidden="true"></i>` : ""}
             ${item.scanner ? '<span class="mail-scanner"></span>' : ""}
@@ -142,7 +142,7 @@ class MailStory extends ReactiveElement {
                 <div>
                   <span>A címzett kulcsával</span>
                   <strong>${item.note}</strong>
-                  <small>A címzett készüléke visszaállítja az eredeti üzenetet.</small>
+                  <small>A címzett egyik, megfelelő kulccsal rendelkező készüléke visszaállítja az üzenetet.</small>
                 </div>
               </div>` : ""}
             <div class="mail-controls">
@@ -163,54 +163,56 @@ class MailStory extends ReactiveElement {
 
 const encryptionModes = {
   https: {
-    tab: "Átvitel közben · HTTPS/TLS",
+    tab: "Átvitel közben · biztonságos kapcsolat",
     title: "A cső zárva van, de a szolgáltató végén kinyílik",
-    body: "A HTTPS vagy TLS megakadályozza, hogy egy kávézó Wi-Fi-jén vagy az internet útvonalán valaki egyszerűen beleolvasson az adatforgalomba. A kapcsolat azonban a szolgáltató szerverén véget ér, ahol a tartalom ismét olvasható lehet.",
-    keyOwner: "A kapcsolat kulcsait a készülék és a szolgáltató szervere kezeli.",
+    body: "A továbbítás közbeni biztonságos kapcsolat megakadályozza, hogy egy kávézó Wi-Fi-jén vagy az internetes útvonalon valaki egyszerűen beleolvasson az adatforgalomba. A küldő és a szolgáltató, majd a szolgáltató és a címzett között két külön kapcsolat van. A szolgáltató középen továbbra is olvashatja a tiszta tartalmat.",
+    termNote: "A HTTPS a webcímen is látható biztonságos kapcsolatra utal; ennek műszaki alapja rendszerint a TLS. A TLS két pont — például a telefonod és a szolgáltató szervere — között védi az úton lévő adatot. Nem jelenti azt, hogy a szolgáltató sem tudja elolvasni a tartalmat.",
+    keyOwner: "Az első kapcsolat kulcsait a küldő készüléke és a szolgáltató, a másodikét a szolgáltató és a címzett készüléke kezeli.",
     provider: "Igen — a szerveren a szolgáltató hozzáférhet a tiszta tartalomhoz.",
     protects: "Útközbeni lehallgatás ellen.",
     limit: "Nem védi a tartalmat magától a szolgáltatótól vagy egy szerverfeltöréstől.",
     packet: "Útközben zárva",
-    keyAt: ["sender", "provider", "recipient"],
+    keyLabels: { sender: "1. kapcsolat", provider: "1. és 2. kapcsolat", recipient: "2. kapcsolat" },
     providerCanRead: true,
     storageCanRead: true,
   },
   providerRest: {
     tab: "Tároláskor · szolgáltatói kulcs",
     title: "A raktár zárva van, de a raktárosnál van a kulcs",
-    body: "A lemez vagy adatbázis titkosítása védi az ellopott merevlemezt és bizonyos üzemeltetési hibákat. Ha a feloldó kulcsot ugyanaz a szolgáltató kezeli, jogosult rendszerként továbbra is fel tudja oldani a tárolt tartalmat.",
+    body: "A lemez vagy adatbázis titkosítása védi az ellopott merevlemezt és bizonyos üzemeltetési hibákat. Ha a kulcsot ugyanaz a szolgáltató kezeli, a saját rendszerében továbbra is feloldhatja a tárolt tartalmat.",
     keyOwner: "A tárolási kulcs a szolgáltató kulcskezelő rendszerében van.",
     provider: "Igen — a szolgáltató a saját kulcsával feloldhatja.",
-    protects: "Ellopott adathordozó és egyes infrastruktúra-támadások ellen.",
+    protects: "Az adathordozó ellopása és egyes, az infrastruktúrát érő támadások ellen.",
     limit: "Nem jelent szolgáltató előli tartalmi titkosságot.",
     packet: "A raktárban zárva",
-    keyAt: ["provider"],
+    keyLabels: { provider: "Tárolási kulcs" },
     providerCanRead: true,
     storageCanRead: false,
   },
   userRest: {
     tab: "Tároláskor · felhasználói kulcs",
     title: "A raktár őrzi a dobozt, de nincs nála a kulcs",
-    body: "Végponti vagy úgynevezett nulla tudású tárolásnál a fájl már a feltöltés előtt titkosítható. A szolgáltató a titkosított adatot őrzi, miközben a feloldó kulcs a felhasználónál marad.",
-    keyOwner: "A feloldó kulcs a felhasználó készülékén vagy saját helyreállítási kulcsában van.",
+    scope: "Ez a példa felhőben tárolt fájlról szól; önmagában nem tesz egy üzenetküldést végpontok között titkosítottá.",
+    body: "Olyan tárolásnál, amelynél a szolgáltató nem ismeri a fájl feloldásához szükséges kulcsot, a fájlt te zárod le még a feltöltés előtt. A tárhely csak a lezárt fájlt kapja meg; más csak akkor tudja megnyitni, ha külön megkapja tőled a kulcsot.",
+    keyOwner: "A fájl feloldásához szükséges kulcs a felhasználó készülékén van, vagy egy általa őrzött helyreállítási kulccsal érhető el.",
     provider: "Nem — ha a megvalósítás valóban nem küldi el neki a kulcsot.",
-    protects: "A tárolót és magát a szolgáltatót érő hozzáférés ellen is.",
+    protects: "A tárolóhoz vagy a szolgáltató rendszeréhez való illetéktelen hozzáféréstől is.",
     limit: "A végpont feltörése, a gyenge jelszó és a metaadatok ettől még kockázatot jelenthetnek.",
-    packet: "A felhasználó zárja le",
-    keyAt: ["sender"],
+    packet: "Lezárt fájl",
+    keyLabels: { sender: "Fájlkulcs" },
     providerCanRead: false,
     storageCanRead: false,
   },
   e2ee: {
     tab: "Végponttól végpontig · E2EE",
     title: "A küldő zárja le, és csak a címzett nyitja ki",
-    body: "Végpontok közötti titkosításnál az üzenet a küldő készülékén válik olvashatatlanná, és a címzett készülékén válik újra olvashatóvá. A közvetítő szolgáltató továbbítja és tárolhatja a titkosított adatot, de nem kap tartalomfeloldó kulcsot.",
+    body: "Végpontok közötti titkosításnál az üzenet a küldő készülékén válik olvashatatlanná, és a címzett készülékén válik újra olvashatóvá. A közvetítő szolgáltató továbbítja és tárolhatja a titkosított adatot, de nem kap a tartalom feloldásához szükséges kulcsot.",
     keyOwner: "A tartalomkulcsok a beszélgetés résztvevőinek végpontjain vannak.",
-    provider: "Nem — a helyesen megvalósított rendszerben nincs nála tartalomfeloldó kulcs.",
-    protects: "Útközben, a szolgáltatónál és a tárolás során is védi a tartalmat.",
-    limit: "A résztvevők készülékét, képernyőmentéseit és a kommunikáció metaadatait nem teszi láthatatlanná.",
+    provider: "Nem — a helyesen megvalósított rendszerben nincs nála a tartalom feloldásához szükséges kulcs.",
+    protects: "Útközben és a szolgáltató által kezelt titkosított másolatban is védi az üzenet tartalmát.",
+    limit: "A résztvevők készülékén vagy biztonsági mentésében tárolt példány védelme külön beállításoktól függ; a képernyőmentéseket és a kommunikáció metaadatait sem teszi láthatatlanná.",
     packet: "Végig zárva",
-    keyAt: ["sender", "recipient"],
+    keyLabels: { sender: "Tartalomkulcs", recipient: "Tartalomkulcs" },
     providerCanRead: false,
     storageCanRead: false,
   },
@@ -227,9 +229,9 @@ class EncryptionLayers extends HTMLElement {
     this.innerHTML = `
       <section class="encryption-shell" aria-labelledby="encryption-title">
         <div class="encryption-heading">
-          <p class="chapter-number">Három külön zár · nem ugyanazt védik</p>
+          <p class="chapter-number">Négy titkosítási helyzet · nem ugyanott és nem ugyanattól védenek</p>
           <h3 id="encryption-title">Ki tudja kinyitni, és hol?</h3>
-          <p>A „titkosított” szó önmagában kevés. Válassz egy megoldást: az ábra megmutatja, hol nyílik ki a tartalom, és kinél van a kulcs.</p>
+          <p>A „titkosított” szó önmagában nem mondja meg, ki olvashatja az adatot. Nézd meg külön az átvitel, a tárolás és a végpontok közötti titkosítás esetét.</p>
         </div>
         <div class="encryption-tabs" role="tablist" aria-label="Titkosítási megoldások">
           ${Object.entries(encryptionModes).map(([key, mode]) => `<button type="button" role="tab" data-encryption="${key}" aria-selected="${key === this.active}" tabindex="${key === this.active ? 0 : -1}">${mode.tab}</button>`).join("")}
@@ -239,13 +241,13 @@ class EncryptionLayers extends HTMLElement {
             <div class="crypto-flow">
               <div class="crypto-node crypto-sender">
                 <span class="crypto-device"><i></i></span><b>Te</b>
-                <em class="crypto-key-chip ${item.keyAt.includes("sender") ? "has-key" : "no-key"}"><i></i>Kulcs</em>
+                <em class="crypto-key-chip ${item.keyLabels?.sender ? "has-key" : "no-key"}"><i></i>${item.keyLabels?.sender || "Nincs kulcs"}</em>
               </div>
               <div class="crypto-route"><span class="crypto-packet"><i></i><b>${item.packet}</b></span><i></i></div>
               <div class="crypto-middle">
                 <div class="crypto-node crypto-service">
                   <span class="crypto-server"><i></i><i></i><i></i></span><b>Szolgáltató</b>
-                  <em class="crypto-key-chip ${item.keyAt.includes("provider") ? "has-key" : "no-key"}"><i></i>Kulcs</em>
+                  <em class="crypto-key-chip ${item.keyLabels?.provider ? "has-key" : "no-key"}"><i></i>${item.keyLabels?.provider || "Nincs kulcs"}</em>
                   <strong class="crypto-access-state ${item.providerCanRead ? "is-readable" : "is-sealed"}">${item.providerCanRead ? "olvasható" : "zárva"}</strong>
                 </div>
                 <div class="crypto-node crypto-storage">
@@ -256,7 +258,7 @@ class EncryptionLayers extends HTMLElement {
               <div class="crypto-route crypto-route--second"><span class="crypto-packet"><i></i><b>${item.packet}</b></span><i></i></div>
               <div class="crypto-node crypto-recipient">
                 <span class="crypto-device"><i></i></span><b>Címzett</b>
-                <em class="crypto-key-chip ${item.keyAt.includes("recipient") ? "has-key" : "no-key"}"><i></i>Kulcs</em>
+                <em class="crypto-key-chip ${item.keyLabels?.recipient ? "has-key" : "no-key"}"><i></i>${item.keyLabels?.recipient || "Nincs kulcs"}</em>
               </div>
             </div>
             <p class="crypto-diagram-note"><span class="is-key"></span>A kulcs birtokosa fel tudja oldani a tartalmat. <span class="is-sealed"></span>A zárt állapot önmagában nem mondja meg, kinél van a kulcs.</p>
@@ -264,7 +266,9 @@ class EncryptionLayers extends HTMLElement {
           <div class="encryption-copy">
             <p class="mini-label">${item.tab}</p>
             <h4>${item.title}</h4>
+            ${item.scope ? `<p class="crypto-scope">${item.scope}</p>` : ""}
             <p>${item.body}</p>
+            ${item.termNote ? `<details class="crypto-term-note"><summary>Mit jelent a HTTPS és a TLS?</summary><p>${item.termNote}</p></details>` : ""}
             <dl>
               <div><dt>Kinél van a kulcs?</dt><dd>${item.keyOwner}</dd></div>
               <div><dt>Olvashatja a szolgáltató?</dt><dd>${item.provider}</dd></div>
@@ -301,13 +305,13 @@ const versions = {
     posterClass: "",
     badge: "Önkéntes<br>lehetőség",
     intro:
-      "A 2021/1232 rendelet átmenetileg kivett bizonyos üzenetküldő szolgáltatásokat az ePrivacy titkossági szabálya alól, hogy a szolgáltatók önként folytathassák a magánüzenetek tartalmának vizsgálatát gyermekbántalmazási anyagok és behálózás felismerésére.",
+      "A 2021/1232 rendelet átmenetileg mentesített bizonyos üzenetküldő szolgáltatásokat az elektronikus kommunikáció titkosságát védő uniós szabályok (ePrivacy) alól. Így a szolgáltatók önként vizsgálhatták a magánüzenetek tartalmát gyermekbántalmazási anyagok és szexuális célú behálózás keresése érdekében.",
     facts: [
       ["1", "Nem a felhasználó önkéntes döntéséről volt szó. A <b>szolgáltató választhatta</b> a vizsgálatot olyan üzeneteknél, amelyek tartalmához technikailag hozzáfért."],
       ["2", "Ez a nem végpontok között titkosított magánüzenetek szövegének, képeinek és videóinak vizsgálatát is jelenthette — nem csupán nyilvános bejegyzésekét."],
-      ["3", "Ismert és új anyag, valamint a gyermekek szexuális célú behálózására utaló teljes beszélgetési összefüggés is a hatályába kerülhetett. A szabály 2026. április 3-án <b>lejárt</b>."],
+      ["3", "Ismert és új gyermekbántalmazási anyagok keresése mellett a szexuális célú behálózás felismerésénél csak meghatározott, objektív kockázati tényezőket lehetett használni; a technológia nem következtethetett a közlések lényegére. A szabály 2026. április 3-án <b>lejárt</b>."],
     ],
-    why: "Miért aggályos? A levelezés attól még magánbeszélgetés, hogy nem E2EE védi. Az 1.0 éppen e szolgáltató által olvasható üzenetek széles vizsgálatához adott külön jogi teret; az „önkéntes” a szolgáltatóra, nem rád vonatkozott.",
+    why: "Miért aggályos? A levelezés attól még magánbeszélgetés, hogy nem E2EE védi. Az 1.0 éppen a szolgáltató által olvasható üzenetek széles körű vizsgálatához adott külön jogi teret; az „önkéntes” a szolgáltatóra, nem rád vonatkozott.",
   },
   two: {
     short: "Állandó rendeletterv",
@@ -319,7 +323,7 @@ const versions = {
     intro:
       "A Bizottság 2022-es javaslata állandó megelőzési, kockázatértékelési, felderítési, bejelentési és eltávolítási rendszert hozna létre. A Tanács és a Parlament sok ponton eltérő változatot támogat.",
     facts: [
-      ["1", "Hatóság által kért <b>felderítési végzés</b> kötelezhetne szolgáltatót meghatározott tartalom keresésére."],
+      ["1", "Egy hatóság által kiadott <b>felderítési végzés</b> kötelezhetne egy szolgáltatót meghatározott tartalom keresésére."],
       ["2", "A legnagyobb vita az új tartalom és a behálózás felismerése, illetve a <b>titkosítás tényleges védelme</b> körül van."],
       ["3", "2026 júliusában még tárgyalják. <b>Nincs végleges szöveg</b>, ezért a pontos kimenetel nyitott."],
     ],
@@ -381,26 +385,26 @@ const labModes = {
     kicker: "Digitális ujjlenyomat",
     title: "Mintha egy pontos körözési fotót hasonlítanánk össze",
     body:
-      "Egy már szakértők által azonosított tiltott fájlból digitális lenyomat készül. A pontos kriptográfiai lenyomat csak azonos fájlt talál; az átalakításokat is felismerő perceptuális lenyomat hasonlósági küszöböt használ, ezért téves egyezése is lehet.",
+      "Egy szakértők által már azonosított tiltott fájlból digitális lenyomat készül. A pontos kriptográfiai lenyomat csak azonos fájlt talál; az átalakításokat is felismerő perceptuális lenyomat hasonlósági küszöböt használ, ezért téves egyezése is lehet.",
     analogy: "A postás nem a levél jelentését találgatja: egy előre megadott pecsétmintát keres. Ha a hasonló pecséteket is elfogadja, már nem csak pontos egyezést talál.",
     art: `<div class="wanted-card"><div class="wanted-card__image">◎</div><b>Ismert lenyomat</b><div class="hash-lines"><span></span><span></span><span></span></div></div>`,
   },
   ai: {
-    label: "Új kép becslése",
-    kicker: "Valószínűségi modell",
+    label: "Új kép osztályozása",
+    kicker: "Kockázati vagy hasonlósági modell",
     title: "Mintha a postásnak kellene megítélnie minden új fényképet",
     body:
-      "Az új, korábban nem látott képnél a gép minták alapján valószínűséget becsül. Nem tudja biztosan, mit lát. Családi fotó, egészségügyi kép vagy műalkotás is téves jelzést kaphat.",
+      "Az új, korábban nem látott képnél a gép 0 és 100 közötti pontszámot ad. A 63/100-as pontszám önmagában nem jelenti azt, hogy 63% a jogsértés esélye. Csak külön méréssel állapítható meg, hogyan kapcsolódik a pontszám a valós találatokhoz. Családi fotó, egészségügyi kép vagy műalkotás is téves jelzést kaphat.",
     analogy: "Itt nincs pontos körözési fotó. A gép azt mondja: „ez hasonlít valamire” — és néha téved.",
-    art: `<div class="ai-card"><div class="ai-card__image">?</div><b>A gép becslése: 63%</b><div class="ai-meter"><span></span></div></div>`,
+    art: `<div class="ai-card"><div class="ai-card__image">?</div><b>Modellpontszám: 63 / 100</b><div class="ai-meter"><span></span></div></div>`,
   },
   grooming: {
     label: "Beszélgetés értelmezése",
     kicker: "Nyelv és összefüggés",
-    title: "Mintha valaki egy teljes levelezés szándékát próbálná megérteni",
+    title: "Mintha valaki egy teljes beszélgetés mögötti szándékot próbálná megérteni",
     body:
-      "A gyermekek szexuális célú behálózásának felismeréséhez a mondatok közti összefüggést, az életkort, a humort, a beceneveket és a manipuláció jeleit kellene értelmezni. Ugyanaz a mondat lehet ártatlan vagy veszélyes a helyzettől függően.",
-    analogy: "Egyetlen szó nem elég. A rendszernek a beszélgetés előzményeit is vizsgálnia kell. Az előzmények nélkül nem dönthető el megbízhatóan.",
+      "Ehhez figyelembe kell venni a mondatok közötti összefüggést, az érintettek életkorát, a humort, a beceneveket és a manipuláció jeleit. Ugyanaz a mondat lehet ártatlan vagy veszélyes a helyzettől függően.",
+    analogy: "Egyetlen szó nem elég. A szándék megítéléséhez gyakran a beszélgetés több előzményére is szükség lehet; a hiányos környezet növeli a tévedés kockázatát.",
     art: `<div class="chat-stack"><span class="chat-bubble">Szia, hogy vagy ma?</span><span class="chat-bubble">Jól, köszi 🙂</span><span class="chat-bubble is-question">Ez ártatlan vagy manipuláció?</span><span class="chat-bubble">A környezet nélkül nem biztos.</span></div>`,
   },
 };
@@ -437,16 +441,16 @@ class DetectionLab extends ReactiveElement {
         </div>
         <section class="base-rate" aria-labelledby="base-rate-title">
           <div class="base-rate__head">
-            <div><p class="mini-label">Szemléltető alaparány-példa</p><h3 id="base-rate-title">A ritka találat matematikája</h3></div>
-            <p><b>Feltételezés:</b> 10 000 üzenet kimenetét látod. Te állítod, valójában mennyi tiltott közöttük, ezekből mennyit talál meg a rendszer, és hány ártatlan üzenetet jelöl tévesen. Ezek szemléltető értékek, nem egy tervezett uniós rendszer mért teljesítménye.</p>
+            <div><p class="mini-label">Szemléltető példa az alaparányra</p><h3 id="base-rate-title">A ritka találat matematikája</h3></div>
+            <p><b>Feltételezés:</b> 10 000 üzenet vizsgálati eredményét látod. Te állítod be, valójában hány tiltott üzenet van közöttük, ezekből mennyit talál meg a rendszer, és hány ártatlan üzenetet jelöl tévesen. Ezek szemléltető értékek, nem egy tervezett uniós rendszer mért teljesítménye.</p>
           </div>
           <p class="rate-explainer"><b>Három külön számról van szó.</b> Az alaparány azt mondja meg, mennyi a valóban tiltott üzenet. Az érzékenység ezek közül talál meg valamennyit. A tévespozitív-arány pedig csak az ártatlan üzenetekre vonatkozik. Mindhárom csúszka 0–100% között állítható.</p>
           <div class="base-rate__control-grid">
             <div class="base-rate__controls">
               <label for="prevalence"><span>Valódi alaparány: az üzenetek hány százaléka ténylegesen tiltott?</span><output data-prevalence-output>${this.formatRate(this.prevalence)}%</output></label>
               <input id="prevalence" type="range" min="0" max="100" step="0.1" value="${this.prevalence}" aria-describedby="rateNote" />
-              <div class="rate-presets" aria-label="Valódi alaparány példaértékek">
-                ${[0, 0.1, 1, 10, 50, 100].map((rate) => `<button type="button" data-prevalence="${rate}">${rate}%</button>`).join("")}
+              <div class="rate-presets" aria-label="Példaértékek a valódi alaparányhoz">
+                ${[0, 0.1, 1, 10, 50, 100].map((rate) => `<button type="button" data-prevalence="${rate}">${this.formatRate(rate)}%</button>`).join("")}
               </div>
             </div>
             <div class="base-rate__controls">
@@ -459,8 +463,8 @@ class DetectionLab extends ReactiveElement {
             <div class="base-rate__controls">
               <label for="falseRate"><span>Tévespozitív-arány: az ártatlan üzenetek hány százalékát jelölje meg?</span><output data-rate-output>${this.formatRate(this.falseRate)}%</output></label>
               <input id="falseRate" type="range" min="0" max="100" step="0.1" value="${this.falseRate}" aria-describedby="rateNote" />
-              <div class="rate-presets" aria-label="Tévespozitív példaértékek">
-                ${[0, 0.1, 0.5, 1, 10, 100].map((rate) => `<button type="button" data-rate="${rate}">${rate}%</button>`).join("")}
+              <div class="rate-presets" aria-label="Példaértékek a tévespozitív-arányhoz">
+                ${[0, 0.1, 0.5, 1, 10, 100].map((rate) => `<button type="button" data-rate="${rate}">${this.formatRate(rate)}%</button>`).join("")}
               </div>
             </div>
           </div>
@@ -470,7 +474,7 @@ class DetectionLab extends ReactiveElement {
           </div>
           <section class="rate-magnifier" aria-labelledby="rate-magnifier-title">
             <div><p class="mini-label">Láthatósági nagyítás</p><h4 id="rate-magnifier-title">A kevés találat se vesszen el a tízezer pont között</h4></div>
-            <p>Legfeljebb 20 nagy jelölést rajzolunk ki kategóriánként. A mellettük álló szám mutatja a teljes, egész üzenetre kerekített darabszámot.</p>
+            <p>Legfeljebb 20 nagy jelölést rajzolunk ki kategóriánként. A mellettük álló szám a teljes darabszámot mutatja, egészre kerekítve.</p>
             <div class="rare-count-grid" data-rare-counts></div>
           </section>
           <div class="rate-results" aria-live="polite">
@@ -479,10 +483,11 @@ class DetectionLab extends ReactiveElement {
             <div class="false-result"><b data-fp>50</b><span>téves riasztás</span></div>
             <div class="true-negative-result"><b data-tn>9 940</b><span>helyesen békén hagyott üzenet</span></div>
           </div>
-          <p class="rate-rounding">A darabszámok várható értékek, egész üzenetre kerekítve.</p>
+          <p class="rate-rounding">A darabszámok várható értékek, egész darabra kerekítve.</p>
+          <p class="rate-example" data-rate-example></p>
           <div class="rate-derived" aria-live="polite">
-            <div><span>Beállított specificitás</span><b data-specificity>99,5%</b><small>100% mínusz a tévespozitív-arány</small></div>
-            <div><span>Pozitív prediktív érték</span><b data-ppv>15,3%</b><small>A valódi találatok aránya az összes riasztás között</small></div>
+            <div><span>Ártatlan üzenetek helyes elengedése</span><b data-specificity>99,5%</b><small>Szakmai nevén specificitás; ha van ártatlan üzenet, 100% mínusz a tévespozitív-arány</small></div>
+            <div><span>A riasztások megbízhatósága</span><b data-ppv>15,3%</b><small>Szakmai nevén pozitív prediktív érték: a valódi találatok aránya az összes riasztás között</small></div>
           </div>
           <p class="rate-summary" id="rateNote" data-rate-summary></p>
           <div class="rate-legend" aria-label="Jelmagyarázat"><span class="is-tp">valódi találat</span><span class="is-fn">elszalasztott</span><span class="is-fp">téves riasztás</span><span class="is-tn">helyesen negatív</span></div>
@@ -537,12 +542,13 @@ class DetectionLab extends ReactiveElement {
   }
 
   formatRate(rate) {
-    return rate < 0.1 ? rate.toFixed(2) : rate.toFixed(rate % 1 ? 1 : 0);
+    return (rate < 0.1 ? rate.toFixed(2) : rate.toFixed(rate % 1 ? 1 : 0)).replace(".", ",");
   }
 
   updateMetrics() {
     const total = 10000;
     const positives = Math.round(total * (this.prevalence / 100));
+    const innocent = total - positives;
     const tp = Math.round(positives * (this.sensitivity / 100));
     const fn = positives - tp;
     const fp = Math.round((total - positives) * (this.falseRate / 100));
@@ -550,7 +556,7 @@ class DetectionLab extends ReactiveElement {
     const flagged = tp + fp;
     const falseShare = flagged ? (fp / flagged) * 100 : null;
     const positivePredictiveValue = flagged ? (tp / flagged) * 100 : null;
-    const specificity = 100 - this.falseRate;
+    const specificity = innocent ? 100 - this.falseRate : null;
     const numberLocale = document.documentElement.lang || "hu";
     this.querySelector("[data-prevalence-output]").textContent = `${this.formatRate(this.prevalence)}%`;
     this.querySelector("[data-sensitivity-output]").textContent = `${this.sensitivity}%`;
@@ -559,10 +565,18 @@ class DetectionLab extends ReactiveElement {
     this.querySelector("[data-fn]").textContent = fn.toLocaleString(numberLocale);
     this.querySelector("[data-fp]").textContent = fp.toLocaleString(numberLocale);
     this.querySelector("[data-tn]").textContent = tn.toLocaleString(numberLocale);
-    this.querySelector("[data-specificity]").textContent = `${specificity.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+    this.querySelector("[data-specificity]").textContent = specificity === null
+      ? "Nem értelmezhető"
+      : `${specificity.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
     this.querySelector("[data-ppv]").textContent = positivePredictiveValue === null
       ? "Nem értelmezhető"
       : `${positivePredictiveValue.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+    this.querySelector("[data-rate-example]").textContent =
+      `A valóban tiltott üzenetek száma ${positives.toLocaleString(numberLocale)}; a rendszer ezek közül ${tp.toLocaleString(numberLocale)} üzenetet talált meg, ${fn.toLocaleString(numberLocale)} üzenetet pedig elszalasztott. ` +
+      `Az ártatlan üzenetek száma ${innocent.toLocaleString(numberLocale)}; ezek közül ${fp.toLocaleString(numberLocale)} üzenetet jelölt meg tévesen. ` +
+      (flagged
+        ? `Így ${flagged.toLocaleString(numberLocale)} riasztásból ${fp.toLocaleString(numberLocale)} ártatlan üzenetre mutat.`
+        : "Így ennél a beállításnál nincs riasztás.");
     this.querySelector("[data-rate-summary]").innerHTML = flagged
       ? `<b>${flagged.toLocaleString(numberLocale)} riasztásból ${fp.toLocaleString(numberLocale)} téves:</b> az ellenőrzendő jelzések ${falseShare.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%-a ártatlan üzenetre mutatna. A pozitív prediktív érték ${positivePredictiveValue.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%.`
       : "<b>Nincs riasztás ennél a beállításnál.</b> A pozitív prediktív érték nem értelmezhető, mert nincs pozitívnak jelölt üzenet.";
@@ -633,7 +647,7 @@ class DetectionLab extends ReactiveElement {
     const caption = total === 0
       ? "Nincs riasztás a beállított példában"
       : total > 1000
-        ? `Az összes ${total.toLocaleString(document.documentElement.lang || "hu")} riasztás arányait mutató 1 000 pontos minta`
+        ? `Az összes ${total.toLocaleString(document.documentElement.lang || "hu")} riasztás arányait mutató, 1 000 pontból álló minta`
         : `A riasztások kinagyítva · ${total.toLocaleString(document.documentElement.lang || "hu")} pont, egy pont egy riasztás`;
     this.querySelector("[data-alert-caption]").textContent = caption;
     canvas.setAttribute("aria-label", caption);
@@ -730,7 +744,7 @@ const rooms = {
     role: "Közérdekű bejelentő",
     kicker: "Biztonságos bizonyítékátadás",
     title: "Amikor belső iratokkal bizonyítasz egy visszaélést",
-    message: "A mellékletből látszik, ki rendelte el. Az azonosságomat addig se fedd fel, amíg nincs biztonságos eljárás.",
+    message: "A mellékletből látszik, ki rendelte el. A személyazonosságomat addig se fedd fel, amíg nincs biztonságos eljárás.",
     why: "A bejelentő személyazonosságának vagy kapcsolatainak kiszivárgása megtorláshoz vezethet. Az öncenzúra közvetlen társadalmi kár: bizonyítékok maradhatnak rejtve.",
   },
 };
@@ -805,7 +819,7 @@ const surveillanceModes = {
     who: "Minden érintett, függetlenül attól, áll-e vele szemben egyedi gyanú; a kiválasztás csak a feldolgozás után történik.",
     suspicion: "Az adatfeldolgozás már azelőtt megkezdődhet, hogy az érintettel szemben konkrét gyanú merülne fel.",
     system: "A beállítástól függően tartalmat, lenyomatot, találati adatot vagy metaadatot.",
-    later: "A keresési lista, a küszöb vagy a cél későbbi módosítása új embereket tehet láthatóvá.",
+    later: "A keresési lista, a küszöb vagy a cél későbbi módosítása új embereket vonhat a vizsgálat körébe.",
   },
 };
 
@@ -847,12 +861,12 @@ class SurveillanceContrast extends HTMLElement {
         </div>
         <div class="metadata-note">
           <span aria-hidden="true">◎</span>
-          <p><b>A metaadat sem „csak technikai adat”.</b> A címzett, időpont, hely, gyakoriság és csoporttagság a szöveg elolvasása nélkül is utalhat arra, hogy ki kivel dolgozik, ki járhat orvoshoz, szervezhet tüntetést vagy kérhet segítséget. A tartalom és a metaadat más, de mindkettő lehet érzékeny.</p>
+          <p><b>A metaadat sem „csak technikai adat”.</b> Az, hogy valaki kivel, mikor, hol és milyen gyakran kommunikál, illetve mely csoportok tagja, a szöveg elolvasása nélkül is utalhat arra, hogy kivel dolgozik, jár-e orvoshoz, szervez-e tüntetést vagy kér-e segítséget. A tartalom és a metaadat más, de mindkettő lehet érzékeny.</p>
         </div>
-        <p class="surveillance-caveat"><b>Pontos megfogalmazás:</b> nem minden automatizált ellenőrzést minősít minden bíróság vagy jogszabály ugyanúgy „tömeges megfigyelésnek”. A technikai hatókört ezért külön mutatjuk meg: kinek az adatait dolgozza fel a rendszer még az egyedi gyanú felmerülése előtt.</p>
+        <p class="surveillance-caveat"><b>Pontos megfogalmazás:</b> nem minden automatizált ellenőrzést minősít minden bíróság vagy jogszabály ugyanúgy „tömeges megfigyelésnek”. Ezért külön azt mutatjuk meg, hány ember adatát dolgozza fel ténylegesen a rendszer még az egyedi gyanú felmerülése előtt.</p>
         <div class="surveillance-consequences">
           <article><span>01</span><h4>A gépi ellenőrzés is ellenőrzés</h4><p>A hozzáférés és a visszaélés kockázata akkor is fennáll, ha először algoritmus elemzi a tartalmat. Téves jelzésnél a privát tartalom emberi ellenőrhöz kerülhet.</p></article>
-          <article><span>02</span><h4>Visszatartó hatás</h4><p>Ha nem tudhatod, mikor emelnek ki egy beszélgetést, jogszerű, érzékeny kérdésekről is hallgathatsz. Ez újságírókat és forrásaikat, ügyvédeket és ügyfeleiket, orvosokat és betegeiket, aktivistákat és családokat is érinthet.</p></article>
+          <article><span>02</span><h4>Visszatartó hatás</h4><p>Ha nem tudhatod, mikor emelnek ki egy beszélgetést, érzékeny, de jogszerű témákról is hallgathatsz. Ez újságírókat és forrásaikat, ügyvédeket és ügyfeleiket, orvosokat és betegeiket, aktivistákat és családokat is érinthet.</p></article>
           <article><span>03</span><h4>Célkiterjesztés</h4><p>A szűk célra kiépített rendszer később más tartalmak keresésére, további jogsértések felderítésére vagy új hatóságok használatára is átállítható. Ezért számít a technikai korlát, nem csak a mai ígéret.</p></article>
           <article><span>04</span><h4>A jó célhoz is kellenek korlátok</h4><p>Fontos közérdekű cél mellett is vizsgálni kell a szükségességet, az arányosságot, a független engedélyezést és felügyeletet, a törlést, az auditot és a jogorvoslatot.</p></article>
         </div>
@@ -886,7 +900,7 @@ const abuseScenarios = [
     icon: "↗",
     fact: "A tartalom-ellenőrző rendszernek valamilyen keresési szabályt vagy listát kell kapnia.",
     path: "Ha a lista frissítésének nincs erős, ellenőrizhető korlátja, egy későbbi döntéshozó más képet, dokumentumot vagy politikai jelképet is felvehet rá.",
-    guard: "Szigorú célhoz kötöttség, nyilvános jogalap és kriptográfiailag ellenőrizhető listafrissítés.",
+    guard: "Minden listaváltoztatásnál legyen látható, ki, mikor és milyen jogalapon adta hozzá az új célt; a változtatást ne lehessen nyom nélkül átírni.",
   },
   {
     key: "false-match",
@@ -902,7 +916,7 @@ const abuseScenarios = [
     icon: "⌁",
     fact: "A gépi jelzést szolgáltatói, hatósági és ügyészi döntések láncolata követheti.",
     path: "A lánc egyes szereplői azonos jelzések közül szelektíven emelhetnek ki ellenzéki, kisebbségi vagy civil szereplőket.",
-    guard: "Független bírói engedély, manipulációt jelző napló, rendszeres külső audit és összehasonlítható átláthatósági adatok.",
+    guard: "Független bíró engedélyezze a célzást; a döntéseket utólag átírhatatlan napló és rendszeres külső ellenőrzés tegye számonkérhetővé.",
   },
   {
     key: "source",
@@ -910,7 +924,7 @@ const abuseScenarios = [
     icon: "✎",
     fact: "Az újságírói forrás és a közérdekű bejelentő gyakran csak bizalmas csatornán ad át bizonyítékot.",
     path: "Már az ellenőrzés lehetősége is öncenzúrát okozhat; egy megszerzett kapcsolati háló pedig felfedheti a forrást.",
-    guard: "Szakmai titkok kifejezett védelme, végpontok közötti titkosítás kizárása a vizsgálatból és célzott eljárás.",
+    guard: "A végpontok között titkosított kommunikációt zárják ki a vizsgálatból, a szakmai titkokat pedig célzott eljárási szabályok védjék.",
   },
   {
     key: "intimate",
@@ -918,15 +932,15 @@ const abuseScenarios = [
     icon: "!",
     fact: "Az ellenőrzés intim képekhez, egészségügyi adatokhoz és magánbeszélgetésekhez férhet hozzá.",
     path: "Kiszivárogtatott vagy kiragadott magánadat alkalmas lehet egy politikus, aktivista vagy tisztviselő lejáratására.",
-    guard: "Adatminimalizálás, rövid törlési határidő, szigorú hozzáférés-kezelés, büntethető naplótörlés és értesítési kötelezettség.",
+    guard: "Csak a feltétlenül szükséges adatot őrizzék meg rövid ideig; kevés ember férhessen hozzá, a naplók törlését pedig tiltsák és szankcionálják.",
   },
   {
     key: "identity",
     tab: "Életkor és azonosítás",
     icon: "18",
     fact: "Az életkor ellenőrzése egyes megoldásoknál személyazonosító vagy biometrikus adatot kapcsolhat a fiókhoz.",
-    path: "Ha az életkori igazolás tartós személyazonosság-térképpé válik, a névtelen politikai részvétel és segítségkérés is sérülhet.",
-    guard: "Adatvédő életkor-igazolás, amely csak a korhatár teljesülését bizonyítja, de nem fedi fel és nem tárolja a személyazonosságot.",
+    path: "Ha az életkori igazolás tartós személyazonossági adatbázissá válik, a névtelen politikai részvétel és segítségkérés is sérülhet.",
+    guard: "A magánszférát védő életkor-igazolás csak a korhatár teljesülését bizonyítsa, de ne fedje fel és ne tárolja a személyazonosságot.",
   },
 ];
 
@@ -950,7 +964,7 @@ class AbuseSimulator extends HTMLElement {
           <i aria-hidden="true">→</i>
           <article class="abuse-path__guard"><span>3 · Mi védene?</span><p>${item.guard}</p></article>
         </div>
-        <p class="abuse-principle"><b>A demokratikus garanciákat nemcsak a jelenlegi döntéshozók jó szándékára, hanem a későbbi rosszhiszemű használatra is méretezni kell.</b> Nemcsak azt kell kérdezni, mire szánják ma a rendszert, hanem azt is, mire lesz képes holnap.</p>
+        <p class="abuse-principle"><b>A demokratikus garanciákat úgy kell kialakítani, hogy a későbbi rosszhiszemű használatnak is ellenálljanak.</b> Nemcsak azt kell kérdezni, mire szánják ma a rendszert, hanem azt is: ki változtathatja meg, ki ellenőrzi, és észrevennénk-e a visszaélést?</p>
       </div>`;
     this.querySelectorAll("[data-abuse]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -974,7 +988,7 @@ class AbuseSimulator extends HTMLElement {
 
 const abuseHistoryCases = [
   {
-    key: "hungary-pegasus", type: "political", place: "Magyarország", year: "2021–2023", title: "Pegasus újságírók, ügyvédek és politikai szereplők telefonján", evidence: "Parlamenti és hatósági vizsgálat",
+    key: "hungary-pegasus", type: "political", place: "Magyarország", year: "2021–2023", title: "Pegasus újságírók, ügyvédek és politikai szereplők telefonjain", evidence: "Parlamenti és hatósági vizsgálat",
     proven: "Az Európai Parlament PEGA-jelentése szerint több mint 300 magyar telefonszám kerülhetett célkeresztbe, köztük oknyomozó újságíróké, ügyvédeké, aktivistáké és egy ellenzéki politikusé. A NAIH megerősítette, hogy több megnevezett személlyel szemben engedélyköteles titkos információgyűjtés folyt.",
     disputed: "A NAIH a megvizsgált ügyekben nem állapított meg jogellenességet; a kiválasztás jogszerűségének és politikai céljának megítélése vitatott.",
     lesson: "A formális engedély önmagában nem oldja meg a politikai célkiválasztás kérdését. Független felügyelet, utólagos értesítés és valódi jogorvoslat is kell.",
@@ -1010,33 +1024,82 @@ const abuseHistoryCases = [
   },
   {
     key: "dutch-algorithm", type: "state", place: "Hollandia", year: "2013–2024", title: "Semlegesnek látszó algoritmus, diszkriminatív otthoni ellenőrzések", evidence: "Adatvédelmi hatósági megállapítás",
-    proven: "A holland oktatási végrehajtó szerv életkor, képzéstípus és lakcím-távolság alapján jelölt diákokat csalásellenőrzésre. Az adatvédelmi hatóság szerint a kritériumoknak nem volt megfelelő objektív alapjuk, és közvetetten gyakrabban érintettek nem európai migrációs hátterű diákokat.",
+    proven: "A holland oktatási végrehajtó szerv életkor, képzéstípus, valamint a lakóhely és a képzés helye közötti távolság alapján jelölt diákokat csalásellenőrzésre. Az adatvédelmi hatóság szerint a kritériumoknak nem volt megfelelő objektív alapjuk, és közvetetten gyakrabban érintettek nem európai migrációs hátterű diákokat.",
     disputed: "A megállapítás nem azt jelenti, hogy minden egyes ellenőrzés diszkriminatív eredményű volt; a kiválasztási rendszer megalapozottságát és hatását bírálta.",
-    lesson: "A névleg semleges jelzők más tulajdonságok helyettesítőivé válhatnak. Csoportonkénti hibamérés és véletlen kontrollminta szükséges.",
+    lesson: "A látszólag semleges ismérvek más tulajdonságok helyettesítőivé válhatnak. Csoportonkénti hibamérés és véletlen kontrollminta szükséges.",
     sources: [["Holland adatvédelmi hatóság · angolul", "https://www.autoriteitpersoonsgegevens.nl/en/node/5189"]],
   },
   {
     key: "xinjiang-ijop", type: "state", place: "Kína · Hszincsiang", year: "2017–2022", title: "Hétköznapi viselkedésből „gyanús személy”", evidence: "Technikai vizsgálat és ENSZ-értékelés",
-    proven: "A Human Rights Watch visszafejtette az IJOP rendőrségi alkalmazást: kapcsolati, telefon-, jármű- és lakcímadatokat egyesített, majd hétköznapi eltérések alapján jelölt ki embereket vizsgálatra. Az ENSZ a tágabb rendszerhez súlyos, diszkriminatív emberi jogi visszaéléseket kapcsolt.",
+    proven: "A Human Rights Watch visszafejtette az IJOP rendőrségi alkalmazást: kapcsolati adatokat, telefonszámokat, jármű- és lakcímadatokat egyesített, majd hétköznapi eltérések alapján jelölt ki embereket vizsgálatra. Az ENSZ a tágabb rendszerhez súlyos, diszkriminatív emberi jogi visszaéléseket kapcsolt.",
     disputed: "Az eset egészen más politikai és jogi környezetben történt, ezért nem közvetlen európai párhuzam, hanem a képességek összekapcsolásának szélsőséges példája.",
-    lesson: "Az adatforrások összekapcsolása minőségileg új hatalmat hoz létre. A profilépítést és a kapcsolati következtetést külön is korlátozni kell.",
+    lesson: "Az adatforrások összekapcsolása minőségileg új megfigyelési képességet hoz létre. A profilépítést és a kapcsolati hálók feltérképezését külön is korlátozni kell.",
     sources: [["Human Rights Watch technikai jelentés · angolul", "https://www.hrw.org/report/2019/05/01/chinas-algorithms-repression/reverse-engineering-xinjiang-police-mass"], ["ENSZ emberi jogi értékelés · angolul", "https://www.ohchr.org/sites/default/files/documents/countries/2022-08-31/22-08-31-final-assesment.pdf"]],
   },
   {
-    key: "twitter-insider", type: "corporate", place: "Egyesült Államok · Szaúd-Arábia", year: "2014–2022", title: "Egy Twitter-alkalmazott kormánykritikusok adatait adta át", evidence: "Jogerős büntetőítélet",
-    proven: "Ahmad Abouammo volt Twitter-alkalmazott kenőpénzért nem nyilvános fiókadatokhoz fért hozzá, majd szaúdi kormánykritikusok azonosítására alkalmas adatokat adott át szaúdi tisztviselőknek. 42 hónap szabadságvesztésre ítélték.",
-    disputed: "Az ítélet egy bennfentes konkrét cselekményeiről szólt, nem arról, hogy a teljes vállalat részt vett volna az adatátadásban.",
-    lesson: "Jogosan létrehozott adatbázissal is visszaélhet privilegizált bennfentes. Szűk hozzáférés, kettős jóváhagyás és manipulálhatatlan napló kell.",
-    sources: [["Amerikai Igazságügyi Minisztérium · angolul", "https://www.justice.gov/usao-ndca/pr/former-twitter-employee-sentenced-42-months-federal-prison-acting-foreign-agent"]],
+    key: "twitter-insider", type: "corporate", place: "Egyesült Államok · Szaúd-Arábia", year: "2014–2026", title: "Egy Twitter-alkalmazott kormánykritikusok adatait adta át", evidence: "Bírósági iratok · részben folyamatban",
+    proven: "Az esküdtszék több vádpontban bűnösnek találta Ahmad Abouammo volt Twitter-alkalmazottat, aki kenőpénzért nem nyilvános fiókadatokhoz fért hozzá, és szaúdi kormánykritikusok azonosítására alkalmas adatokat adott át szaúdi tisztviselőknek. A 42 hónapos büntetést később hatályon kívül helyezték; 2025-ben a már letöltött időre és két év felügyeletre ítélték újra.",
+    disputed: "Az ügy nem azt állítja, hogy a teljes vállalat részt vett az adatátadásban. Az Egyesült Államok Legfelsőbb Bírósága 2026. június 11-én eljárási okból megfordította az egyik vádpont helyszínére vonatkozó döntést, és az ügyet visszaküldte további eljárásra.",
+    lesson: "A jogszerűen létrehozott adatbázissal is visszaélhet egy kiemelt hozzáférésű bennfentes. Szűk hozzáférés, kettős jóváhagyás és manipulálhatatlan napló kell.",
+    sources: [["Amerikai Igazságügyi Minisztérium · angolul", "https://www.justice.gov/usao-ndca/pr/former-twitter-employee-sentenced-42-months-federal-prison-acting-foreign-agent"], ["Az Egyesült Államok Legfelsőbb Bíróságának 2026-os döntése · angolul", "https://www.supremecourt.gov/opinions/25pdf/25-5146_e29f.pdf"]],
   },
   {
     key: "rite-aid", type: "corporate", place: "Egyesült Államok", year: "2012–2023", title: "A hamis arcfelismerési találatból rendőri intézkedés lett", evidence: "FTC-panasz és egyezségi végzés",
-    proven: "Az FTC szerint a Rite Aid nem mérte megfelelően arcfelismerő rendszere pontosságát, és nem követte a hamis találatokat. Téves egyezések után ártatlan vásárlókat követtek, átkutattak, kiküldtek vagy rendőrt hívtak rájuk; a kár aránytalanul érintett fekete és ázsiai közösségeket.",
+    proven: "Az FTC szerint a Rite Aid nem mérte megfelelően az általa használt arcfelismerő rendszer pontosságát, és nem követte a hamis találatokat. Téves egyezések után ártatlan vásárlókat követtek, átkutattak, kiküldtek vagy rendőrt hívtak rájuk; a kár aránytalanul érintett fekete és ázsiai közösségeket.",
     disputed: "A megfogalmazásnál fontos az „FTC szerint” minősítés: az ismertetett tényállás hatósági panasz és egyezség része.",
     lesson: "A téves pozitív nem puszta statisztikai hiba: egy szervezeti folyamatban megalázás, nyomozás vagy kényszerintézkedés lehet belőle.",
     sources: [["Federal Trade Commission · angolul", "https://search.ftc.gov/news-events/news/press-releases/2023/12/rite-aid-banned-using-ai-facial-recognition-after-ftc-says-retailer-deployed-technology-without"]],
   },
 ];
+
+const escapeHTML = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
+
+const safeExternalURL = (value) => {
+  try {
+    const url = new URL(String(value ?? ""), window.location.href);
+    return url.protocol === "https:" ? escapeHTML(url.href) : "#";
+  } catch {
+    return "#";
+  }
+};
+
+const groupNamesHU = {
+  EPP: "Európai Néppárt",
+  "European People’s Party": "Európai Néppárt",
+  "S&D": "Szocialisták és Demokraták Progresszív Szövetsége",
+  "Progressive Alliance of Socialists and Democrats": "Szocialisták és Demokraták Progresszív Szövetsége",
+  Renew: "Renew Europe",
+  "Renew Europe": "Renew Europe",
+  "Greens/EFA": "Zöldek/Európai Szabad Szövetség",
+  "Greens/European Free Alliance": "Zöldek/Európai Szabad Szövetség",
+  ECR: "Európai Konzervatívok és Reformerek",
+  "European Conservatives and Reformists": "Európai Konzervatívok és Reformerek",
+  PfE: "Patrióták Európáért",
+  "Patriots for Europe": "Patrióták Európáért",
+  ESN: "Szuverén Nemzetek Európája",
+  "Europe of Sovereign Nations": "Szuverén Nemzetek Európája",
+  "The Left": "Baloldal az Európai Parlamentben",
+  "The Left in the European Parliament": "Baloldal az Európai Parlamentben",
+  "Identity and Democracy": "Identitás és Demokrácia",
+  "Non-attached": "Független képviselők",
+  "Non-attached Members": "Független képviselők",
+};
+
+const displayGroupName = (group) => {
+  const original = String(group ?? "");
+  const translated = groupNamesHU[original];
+  if (!translated) return original;
+  if (translated === original || original.length > 12) return translated;
+  return `${translated} (${original})`;
+};
+
+const normalizeVoteCount = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.round(number)) : null;
+};
+
+const displayVoteCount = (value) => normalizeVoteCount(value) ?? "—";
 
 class AbuseHistory extends HTMLElement {
   connectedCallback() {
@@ -1049,15 +1112,15 @@ class AbuseHistory extends HTMLElement {
     const cases = abuseHistoryCases.filter((item) => this.filter === "all" || item.type === this.filter);
     this.innerHTML = `
       <div class="history-shell">
-        <div class="history-filters" role="group" aria-label="Esetek szűrése">${Object.entries(types).map(([key, label]) => `<button type="button" data-history-filter="${key}" aria-pressed="${this.filter === key}">${label}</button>`).join("")}</div>
+        <div class="history-filters" role="group" aria-label="Esetek szűrése">${Object.entries(types).map(([key, label]) => `<button type="button" data-history-filter="${escapeHTML(key)}" aria-pressed="${this.filter === key}">${escapeHTML(label)}</button>`).join("")}</div>
         <div class="history-grid">
           ${cases.map((item, index) => `<details class="history-case" ${index === 0 ? "open" : ""}>
-            <summary><span><i>${item.place} · ${item.year}</i><b>${item.title}</b></span><em>${item.evidence}</em><strong aria-hidden="true">+</strong></summary>
+            <summary><span><i>${escapeHTML(item.place)} · ${escapeHTML(item.year)}</i><b>${escapeHTML(item.title)}</b></span><em>${escapeHTML(item.evidence)}</em><strong aria-hidden="true">+</strong></summary>
             <div class="history-case__body">
-              <section><h4>Mi bizonyított?</h4><p>${item.proven}</p></section>
-              <section><h4>Mi vitatott vagy korlátozott?</h4><p>${item.disputed}</p></section>
-              <section class="history-lesson"><h4>Mi a tanulság?</h4><p>${item.lesson}</p></section>
-              <div class="history-sources">${item.sources.map(([label, url]) => `<a href="${url}" target="_blank" rel="noreferrer">${label} ↗</a>`).join("")}</div>
+              <section><h4>Mi bizonyított?</h4><p>${escapeHTML(item.proven)}</p></section>
+              <section><h4>Mi vitatott vagy korlátozott?</h4><p>${escapeHTML(item.disputed)}</p></section>
+              <section class="history-lesson"><h4>Mi a tanulság?</h4><p>${escapeHTML(item.lesson)}</p></section>
+              <div class="history-sources">${item.sources.map(([label, url]) => `<a href="${safeExternalURL(url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(label)} ↗</a>`).join("")}</div>
             </div>
           </details>`).join("")}
         </div>
@@ -1069,9 +1132,11 @@ class AbuseHistory extends HTMLElement {
   }
 }
 
-const escapeHTML = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
-
 class VoteExplorer extends HTMLElement {
+  pageSize() {
+    return window.matchMedia("(max-width: 600px)").matches ? 10 : 48;
+  }
+
   connectedCallback() {
     this.voteKey = this.voteKey || "2026-july-rejection";
     this.view = this.view || "members";
@@ -1079,62 +1144,82 @@ class VoteExplorer extends HTMLElement {
     this.group = this.group || "ALL";
     this.search = this.search || "";
     this.hungarianOnly = this.hungarianOnly || false;
-    this.limit = this.limit || 48;
+    this.limit = this.limit || this.pageSize();
     this.render();
   }
 
   render() {
-    const votes = window.CHAT_CONTROL_VOTES || [];
+    const votes = Array.isArray(window.CHAT_CONTROL_VOTES) ? window.CHAT_CONTROL_VOTES : [];
     if (!votes.length) {
-      this.innerHTML = `<p class="vote-data-error">A név szerinti szavazati adatok nem töltődtek be.</p>`;
+      this.innerHTML = `<p class="vote-data-error">A név szerinti szavazások adatai nem töltődtek be.</p>`;
       return;
     }
     const vote = votes.find((item) => item.key === this.voteKey) || votes[votes.length - 1];
-    this.voteKey = vote.key;
+    this.voteKey = String(vote.key ?? "");
     const numberLocale = document.documentElement.lang || "hu";
-    const groups = [...new Set(vote.members.map((member) => member.group))].sort((a, b) => a.localeCompare(b, numberLocale));
-    const total = Object.values(vote.totals).reduce((sum, value) => sum + value, 0);
     const positions = ["FOR", "AGAINST", "ABSTENTION", "DID_NOT_VOTE"];
-    const filtered = vote.members.filter((member) => {
-      const nameMatch = member.name.toLocaleLowerCase(numberLocale).includes(this.search.toLocaleLowerCase(numberLocale));
-      return nameMatch && (this.position === "ALL" || member.position === this.position) && (this.group === "ALL" || member.group === this.group) && (!this.hungarianOnly || member.country === "HU");
+    const totals = Object.fromEntries(positions.map((position) => {
+      return [position, normalizeVoteCount(vote.totals?.[position]) ?? 0];
+    }));
+    const total = positions.reduce((sum, position) => sum + totals[position], 0) || 1;
+    const members = Array.isArray(vote.members) ? vote.members : [];
+    const positionLabels = Object.fromEntries(positions.map((position) => [position, String(vote.position_labels?.[position] ?? position)]));
+    const groups = [...new Set(members.map((member) => String(member.group ?? "")).filter(Boolean))].sort((a, b) => a.localeCompare(b, numberLocale));
+    const search = String(this.search ?? "");
+    const filtered = members.filter((member) => {
+      const name = String(member.name ?? "");
+      const group = String(member.group ?? "");
+      const country = String(member.country ?? "");
+      const position = positions.includes(member.position) ? member.position : "DID_NOT_VOTE";
+      const nameMatch = name.toLocaleLowerCase(numberLocale).includes(search.toLocaleLowerCase(numberLocale));
+      return nameMatch && (this.position === "ALL" || position === this.position) && (this.group === "ALL" || group === this.group) && (!this.hungarianOnly || country === "HU");
     });
     this.innerHTML = `
       <section class="vote-explorer-shell" aria-labelledby="vote-explorer-title">
-        <div class="vote-explorer-heading"><div><p class="mini-label">Név szerinti szavazatok</p><h3 id="vote-explorer-title">Ki hogyan szavazott?</h3></div><p>Válassz egy döntést. A feliratok minden esetben megmutatják, mit jelentett az igen és a nem.</p></div>
+        <div class="vote-explorer-heading"><div><p class="mini-label">Név szerinti szavazatok</p><h3 id="vote-explorer-title">Ki hogyan szavazott?</h3></div><p>Válassz egy szavazást. A feliratok minden esetben megmutatják, mit jelentett az igen és a nem.</p></div>
         <div class="vote-picker" role="tablist" aria-label="Szavazás kiválasztása">
-          ${votes.map((item) => `<button type="button" role="tab" data-vote-key="${item.key}" aria-selected="${item.key === vote.key}"><span>${item.short_date}</span><b>${item.title}</b><small>${item.totals.FOR} · ${item.totals.AGAINST} · ${item.totals.ABSTENTION}</small></button>`).join("")}
+          ${votes.map((item) => `<button type="button" role="tab" data-vote-key="${escapeHTML(item.key)}" aria-selected="${item.key === vote.key}"><span>${escapeHTML(item.short_date)}</span><b>${escapeHTML(item.title)}</b><small>${escapeHTML(item.totals?.FOR)} igen · ${escapeHTML(item.totals?.AGAINST)} nem · ${escapeHTML(item.totals?.ABSTENTION)} tartózkodás</small></button>`).join("")}
         </div>
         <div class="vote-detail-card">
-          <div class="vote-detail-head"><div><span>${vote.body}</span><h4>${vote.question}</h4><p>${vote.meaning}</p></div><strong>${vote.result_label}</strong></div>
+          <div class="vote-detail-head"><div><span>${escapeHTML(vote.body)}</span><h4>${escapeHTML(vote.question)}</h4><p>${escapeHTML(vote.meaning)}</p></div><strong>${escapeHTML(vote.result_label)}</strong></div>
           <div class="vote-stack" aria-label="Szavazatok megoszlása">
-            ${positions.map((position) => `<span class="position-${position.toLowerCase().replaceAll("_", "-")}" style="width:${(vote.totals[position] / total) * 100}%"><i>${vote.totals[position]}</i></span>`).join("")}
+            ${positions.map((position) => `<span class="position-${position.toLowerCase().replaceAll("_", "-")}" style="width:${(totals[position] / total) * 100}%"><i>${totals[position]}</i></span>`).join("")}
           </div>
           <div class="vote-total-cards">
-            ${positions.map((position) => `<div class="position-${position.toLowerCase().replaceAll("_", "-")}"><b>${vote.totals[position]}</b><span>${vote.position_labels[position]}</span></div>`).join("")}
+            ${positions.map((position) => `<div class="position-${position.toLowerCase().replaceAll("_", "-")}"><b>${displayVoteCount(vote.totals?.[position])}</b><span>${escapeHTML(positionLabels[position])}</span></div>`).join("")}
           </div>
         </div>
-        <div class="vote-view-switch" role="group" aria-label="Adatok nézete"><button type="button" data-vote-view="members" aria-pressed="${this.view === "members"}">Képviselők</button><button type="button" data-vote-view="groups" aria-pressed="${this.view === "groups"}">Frakciók</button></div>
+        <div class="vote-view-switch" role="group" aria-label="Szavazati adatok nézete"><button type="button" data-vote-view="members" aria-pressed="${this.view === "members"}">Képviselők</button><button type="button" data-vote-view="groups" aria-pressed="${this.view === "groups"}">Frakciók</button></div>
         ${this.view === "members" ? `
           <div class="vote-filters">
             <label><span>Keresés név szerint</span><input type="search" data-member-search value="${escapeHTML(this.search)}" placeholder="Például: Cseh Katalin" /></label>
-            <label><span>Álláspont</span><select data-position-filter><option value="ALL">Mindegyik</option>${positions.map((position) => `<option value="${position}" ${this.position === position ? "selected" : ""}>${vote.position_labels[position]}</option>`).join("")}</select></label>
-            <label><span>Frakció</span><select data-group-filter><option value="ALL">Mindegyik</option>${groups.map((group) => `<option value="${escapeHTML(group)}" ${this.group === group ? "selected" : ""}>${escapeHTML(group)}</option>`).join("")}</select></label>
+            <label><span>Álláspont</span><select data-position-filter><option value="ALL">Mindegyik</option>${positions.map((position) => `<option value="${position}" ${this.position === position ? "selected" : ""}>${escapeHTML(positionLabels[position])}</option>`).join("")}</select></label>
+            <label><span>Frakció (európai parlamenti pártcsoport)</span><select data-group-filter><option value="ALL">Mindegyik</option>${groups.map((group) => `<option value="${escapeHTML(group)}" ${this.group === group ? "selected" : ""}>${escapeHTML(displayGroupName(group))}</option>`).join("")}</select></label>
             <button type="button" class="hungarian-filter" data-hungarian-filter aria-pressed="${this.hungarianOnly}">HU · magyar képviselők</button>
           </div>
           <p class="filter-count" role="status">${filtered.length.toLocaleString(numberLocale)} képviselő felel meg a szűrésnek.</p>
           <div class="member-grid">
-            ${filtered.slice(0, this.limit).map((member) => `<article><span class="member-position position-${member.position.toLowerCase().replaceAll("_", "-")}">${vote.position_labels[member.position]}</span><h5>${escapeHTML(member.name)}</h5><p>${member.country ? `<b>${member.country}</b> · ` : ""}${escapeHTML(member.group)}</p></article>`).join("") || `<p class="empty-members">Nincs ilyen találat. Próbálj másik szűrést.</p>`}
+            ${filtered.slice(0, this.limit).map((member) => {
+              const position = positions.includes(member.position) ? member.position : "DID_NOT_VOTE";
+              const country = String(member.country ?? "");
+              return `<article><span class="member-position position-${position.toLowerCase().replaceAll("_", "-")}">${escapeHTML(positionLabels[position])}</span><h5>${escapeHTML(member.name)}</h5><p>${country ? `<b>${escapeHTML(country)}</b> · ` : ""}${escapeHTML(displayGroupName(member.group))}</p></article>`;
+            }).join("") || `<p class="empty-members">Nincs ilyen találat. Próbálj másik szűrést.</p>`}
           </div>
-          ${filtered.length > this.limit ? `<button class="small-button vote-more" type="button" data-vote-more>További ${Math.min(48, filtered.length - this.limit)} képviselő</button>` : ""}
+          ${filtered.length > this.limit ? `<button class="small-button vote-more" type="button" data-vote-more>További ${Math.min(this.pageSize(), filtered.length - this.limit)} képviselő</button>` : ""}
         ` : `
           <div class="group-grid">
-            ${vote.group_stats.map((item) => `<article><h5>${escapeHTML(item.group)}</h5><p>${escapeHTML(item.label)}</p><div>${positions.map((position) => `<span class="position-${position.toLowerCase().replaceAll("_", "-")}"><b>${item.stats[position] || 0}</b><small>${position === "FOR" ? "igen" : position === "AGAINST" ? "nem" : position === "ABSTENTION" ? "tart." : "nem szav."}</small></span>`).join("")}</div></article>`).join("")}
+            ${(Array.isArray(vote.group_stats) ? vote.group_stats : []).map((item) => `<article><h5>${escapeHTML(displayGroupName(item.group))}</h5><p>Európai parlamenti pártcsoport</p><div>${positions.map((position) => `<span class="position-${position.toLowerCase().replaceAll("_", "-")}"><b>${displayVoteCount(item.stats?.[position])}</b><small>${position === "FOR" ? "igen" : position === "AGAINST" ? "nem" : position === "ABSTENTION" ? "tartózkodott" : "nem szavazott"}</small></span>`).join("")}</div></article>`).join("")}
           </div>
         `}
-        <div class="vote-sources"><span>Adatforrás:</span><a href="${vote.official_source}" target="_blank" rel="noreferrer">hivatalos név szerinti jegyzőkönyv ↗</a><a href="${vote.explore_source}" target="_blank" rel="noreferrer">HowTheyVote-adatnézet ↗</a><small>A HowTheyVote az Európai Parlament nyílt adatait dolgozza fel (ODbL). A 2023-as LIBE-szavazatokat a bizottsági jegyzőkönyvből vettük át.</small></div>
+        <div class="vote-sources"><span>Adatforrás:</span><a href="${safeExternalURL(vote.official_source)}" target="_blank" rel="noopener noreferrer">hivatalos név szerinti jegyzőkönyv ↗</a><a href="${safeExternalURL(vote.explore_source)}" target="_blank" rel="noopener noreferrer">HowTheyVote-adatnézet ↗</a><small>Ez az adatnézet öt, a történet szempontjából fontos név szerinti döntést mutat, nem az eljárások minden köztes szavazását. A HowTheyVote az Európai Parlament nyílt adatait dolgozza fel (ODbL). A 2023-as LIBE-szavazatokat a bizottsági jegyzőkönyvből vettük át; a nem szavazók száma ott nem állapítható meg, ezért „—” jelöli.</small></div>
       </section>`;
     this.bindEvents();
+    requestAnimationFrame(() => {
+      const picker = this.querySelector(".vote-picker");
+      const active = picker?.querySelector('[aria-selected="true"]');
+      if (!picker || !active || picker.scrollWidth <= picker.clientWidth) return;
+      picker.scrollLeft = Math.max(0, active.offsetLeft - ((picker.clientWidth - active.offsetWidth) / 2));
+    });
   }
 
   bindEvents() {
@@ -1144,7 +1229,7 @@ class VoteExplorer extends HTMLElement {
       this.group = "ALL";
       this.search = "";
       this.hungarianOnly = false;
-      this.limit = 48;
+      this.limit = this.pageSize();
       this.render();
     }));
     this.querySelectorAll("[data-vote-view]").forEach((button) => button.addEventListener("click", () => {
@@ -1153,16 +1238,16 @@ class VoteExplorer extends HTMLElement {
     }));
     this.querySelector("[data-member-search]")?.addEventListener("input", (event) => {
       this.search = event.target.value;
-      this.limit = 48;
+      this.limit = this.pageSize();
       this.render();
       const input = this.querySelector("[data-member-search]");
       input?.focus();
       input?.setSelectionRange(this.search.length, this.search.length);
     });
-    this.querySelector("[data-position-filter]")?.addEventListener("change", (event) => { this.position = event.target.value; this.limit = 48; this.render(); });
-    this.querySelector("[data-group-filter]")?.addEventListener("change", (event) => { this.group = event.target.value; this.limit = 48; this.render(); });
-    this.querySelector("[data-hungarian-filter]")?.addEventListener("click", () => { this.hungarianOnly = !this.hungarianOnly; this.limit = 48; this.render(); });
-    this.querySelector("[data-vote-more]")?.addEventListener("click", () => { this.limit += 48; this.render(); });
+    this.querySelector("[data-position-filter]")?.addEventListener("change", (event) => { this.position = event.target.value; this.limit = this.pageSize(); this.render(); });
+    this.querySelector("[data-group-filter]")?.addEventListener("change", (event) => { this.group = event.target.value; this.limit = this.pageSize(); this.render(); });
+    this.querySelector("[data-hungarian-filter]")?.addEventListener("click", () => { this.hungarianOnly = !this.hungarianOnly; this.limit = this.pageSize(); this.render(); });
+    this.querySelector("[data-vote-more]")?.addEventListener("click", () => { this.limit += this.pageSize(); this.render(); });
   }
 }
 
@@ -1190,9 +1275,9 @@ class VoteSimulator extends HTMLElement {
           <div class="vote-number"><b>360</b><span>abszolút többség</span></div>
         </div>
         <div class="vote-explainer" data-vote-explainer>
-          <b>Ezért az elutasítási indítvány nem kapta meg a szükséges többséget.</b> Nem az számított, hogy a 314 több-e, mint a 276. A Parlament 719 hivatalban lévő képviselőjének több mint fele kellett: legalább 360. A Parlament ezután módosította a szöveget; a Tanácsnak még döntenie kell róla.
+          <b>Ezért az elutasítási indítvány nem kapta meg a szükséges többséget.</b> Nem az számított, hogy a 314 több-e, mint a 276. A 719 hivatalban lévő képviselőből legalább 360 támogató szavazat kellett. A Parlament ezután módosította a szöveget; a Tanácsnak még döntenie kell róla.
         </div>
-        <div class="vote-action"><button class="small-button primary" type="button" data-run-vote>Számoljuk meg a 314-et</button></div>
+        <div class="vote-action"><button class="small-button primary" type="button" data-run-vote>Mutasd a 314 szavazatot</button></div>
       </div>`;
 
     const button = this.querySelector("[data-run-vote]");
@@ -1226,7 +1311,7 @@ const safeguards = [
     id: "warrant",
     short: "Célzott végzés",
     title: "Egyedi, bíró által ellenőrzött célzás",
-    body: "A vizsgálat csak konkrét személyre, fiókra, időre és súlyos bűncselekményre szólhat; nem indulhat minden felhasználón automatikusan.",
+    body: "A vizsgálat csak konkrét személyre vagy fiókra, meghatározott időszakra és súlyos bűncselekményre vonatkozhat; nem terjedhet ki automatikusan minden felhasználóra.",
     icon: "§",
   },
   {
@@ -1247,13 +1332,13 @@ const safeguards = [
     id: "audit",
     short: "Független audit",
     title: "Nyilvános mérés és külső technikai ellenőrzés",
-    body: "A téves pozitív és téves negatív arányokat valós környezetben, csoportonként is mérni kell; az auditáló nem függhet a rendszer szállítójától.",
+    body: "A téves pozitív és téves negatív arányokat valós környezetben, csoportonként is mérni kell; az auditot végző szakértő nem függhet a rendszer szállítójától.",
     icon: "⌕",
   },
   {
     id: "human",
     short: "Emberi kontroll",
-    title: "Nincs automatikus szankció egy gépi jelzésből",
+    title: "Egy gépi jelzés ne vezessen automatikus szankcióhoz",
     body: "Képzett felülvizsgáló, dokumentált döntési szabály és arányos eljárás kell; egy modell pontszáma önmagában nem lehet letiltás vagy feljelentés alapja.",
     icon: "◉",
   },
@@ -1261,7 +1346,7 @@ const safeguards = [
     id: "remedy",
     short: "Jogorvoslat",
     title: "Értesítés, törlés és megtámadható döntés",
-    body: "Az érintettnek — ha a nyomozás ezt már nem veszélyezteti — tudnia kell a vizsgálatról, kijavíttathatja a hibát, és független fórumhoz fordulhat.",
+    body: "Az érintettet — ha a nyomozás ezt már nem veszélyezteti — tájékoztatni kell a vizsgálatról; lehetőséget kell kapnia a hiba kijavíttatására és arra, hogy független fórumhoz forduljon.",
     icon: "↺",
   },
 ];
@@ -1284,11 +1369,11 @@ class SafeguardBuilder extends HTMLElement {
     };
     if (count < safeguards.length) return {
       label: "Erősebb csomag, nyitott résekkel",
-      body: "A kiválasztott korlátok csökkentik a kockázatot, de a kihagyott pont továbbra is valódi visszaélési vagy tévedési út lehet.",
+      body: "A kiválasztott korlátok csökkentik a kockázatot, de minden kihagyott garancia továbbra is lehetőséget hagy visszaélésre vagy tévedésre.",
     };
     return {
-      label: "Teljesebb ellenőrzési lánc — nem automatikus jóváhagyás",
-      body: "A hat garanciát a pontos jogszövegben, a műszaki megvalósításban és a gyakorlatban is bizonyítani és folyamatosan érvényesíteni kell.",
+      label: "Teljesebb garanciarendszer — nem automatikus jóváhagyás",
+      body: "A hat garanciát a jogszabály szövegében, a műszaki megvalósításban és a gyakorlatban is bizonyítani és folyamatosan érvényesíteni kell.",
     };
   }
 
@@ -1429,13 +1514,13 @@ class MythQuiz extends HTMLElement {
     if (this.index >= this.questions.length) {
       this.innerHTML = `
         <div class="quiz-shell">
-          <div class="quiz-heading"><span>A minikvíz véget ért</span><h3>A pontos érv a meggyőző érv</h3></div>
+          <div class="quiz-heading"><span>A minikvíz véget ért</span><h3>A pontos érv meggyőzőbb</h3></div>
           <div class="quiz-card quiz-score" role="status" tabindex="-1">
             <strong>${this.score}/${this.questions.length}</strong>
             <h3>${this.score === this.questions.length ? "Minden válaszod helyes." : "Most már látod, mely részletekre érdemes figyelni."}</h3>
-            <p>A legerősebb állampolgári érv egyszerre védi a gyermekeket, a bizonyítékokat és a magánkommunikáció biztonságát.</p>
-            <p class="quiz-seen">Ebben a böngészési munkamenetben a 100 kérdésből <b>${this.seenCount()}</b> különbözőt láttál.</p>
-            <button class="small-button primary quiz-next" type="button" data-new-quiz>Új 10 kérdés</button>
+            <p>A legerősebb érv egyszerre védi a gyermekeket, a bizonyítékokat és a magánkommunikáció biztonságát.</p>
+            <p class="quiz-seen">Az oldal megnyitása óta a 100 kérdésből <b>${this.seenCount()}</b> különbözőt láttál.</p>
+            <button class="small-button primary quiz-next" type="button" data-new-quiz>10 új kérdés</button>
           </div>
         </div>`;
       this.querySelector("[data-new-quiz]").addEventListener("click", () => this.startNewSet());
@@ -1445,10 +1530,10 @@ class MythQuiz extends HTMLElement {
     const question = this.questions[this.index];
     this.innerHTML = `
       <div class="quiz-shell">
-        <div class="quiz-heading"><span>${question.categoryLabel} · ${this.index + 1}/${this.questions.length}</span><h3>Tény vagy tévhit?</h3><p>100 ellenőrzött állításból minden körben 10 kiegyensúlyozott kérdés.</p></div>
+        <div class="quiz-heading"><span>${escapeHTML(question.categoryLabel)} · ${this.index + 1}/${this.questions.length}</span><h3>Tény vagy tévhit?</h3><p>Minden körben 10 kérdést kapsz, kiegyensúlyozottan válogatva a 100 ellenőrzött állításból.</p></div>
         <div class="quiz-progress" aria-hidden="true"><span style="width:${((this.index + 1) / this.questions.length) * 100}%"></span></div>
         <div class="quiz-card" tabindex="-1">
-          <h3>${question.statement}</h3>
+          <h3>${escapeHTML(question.statement)}</h3>
           <div class="quiz-actions">
             <button class="quiz-choice" type="button" data-answer="true">Igaz</button>
             <button class="quiz-choice" type="button" data-answer="false">Nem igaz</button>
@@ -1467,7 +1552,9 @@ class MythQuiz extends HTMLElement {
         if (correct) this.score += 1;
         const feedback = this.querySelector("[data-quiz-feedback]");
         feedback.className = `quiz-feedback is-visible ${correct ? "is-right" : "is-wrong"}`;
-        feedback.innerHTML = `<b>${correct ? "Pontosan." : "Nem egészen."}</b> ${question.detail}`;
+        const verdict = document.createElement("b");
+        verdict.textContent = correct ? "Pontosan." : "Nem egészen.";
+        feedback.replaceChildren(verdict, document.createTextNode(` ${String(question.detail ?? "")}`));
         this.querySelectorAll("[data-answer]").forEach((choice) => {
           choice.disabled = true;
           if ((choice.dataset.answer === "true") === question.answer) choice.setAttribute("aria-label", `${choice.textContent}, ez a helyes válasz`);
@@ -1554,7 +1641,7 @@ const updateMotionToggle = (reduced) => {
   if (!motionToggle) return;
   motionToggle.setAttribute("aria-pressed", String(reduced));
   motionToggle.querySelector(".motion-icon").textContent = reduced ? "▶" : "Ⅱ";
-  motionToggle.querySelector(".button-label").textContent = reduced ? "Animáció indítása" : "Animáció leállítása";
+  motionToggle.querySelector(".button-label").textContent = reduced ? "Animációk indítása" : "Animációk leállítása";
   motionToggle.title = reduced ? "A mozgó ábrák újraindítása" : "A mozgó ábrák leállítása";
 };
 motionToggle?.addEventListener("click", () => {

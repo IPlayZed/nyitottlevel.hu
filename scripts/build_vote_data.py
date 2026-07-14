@@ -71,7 +71,7 @@ META = {
         "key": "2026-july-rejection",
         "date": "2026. július 9.",
         "short_date": "2026. júl.",
-        "title": "A Tanács álláspontjának elutasítási indítványa",
+        "title": "Indítvány a Tanács álláspontjának elutasítására",
         "question": "Elutasítsa-e a Parlament a Tanács által javasolt visszaállítást?",
         "result_label": "Nem érte el a küszöböt",
         "meaning": "Itt az igen az elutasítást — vagyis a Tanács szövegével szembeni fellépést — jelentette. Legalább 360 igen kellett volna; 314 érkezett.",
@@ -88,6 +88,12 @@ META = {
 
 def compact_plenary(source_key):
     raw = json.loads(INPUTS[source_key].read_text(encoding="utf-8"))
+    if not isinstance(raw, dict) or not isinstance(raw.get("member_votes"), list):
+        raise ValueError(f"Invalid vote input for {source_key}: member_votes must be a list")
+    if not isinstance(raw.get("stats", {}).get("total"), dict) or not isinstance(raw.get("stats", {}).get("by_group"), list):
+        raise ValueError(f"Invalid vote input for {source_key}: missing aggregate statistics")
+    if not str(raw.get("id", "")).isdigit():
+        raise ValueError(f"Invalid vote input for {source_key}: id must be numeric")
     meta = dict(META[source_key])
     members = []
     for item in raw["member_votes"]:
@@ -154,8 +160,9 @@ def committee_vote():
         for group, names in groups.items():
             group_counts.setdefault(group, Counter())[position] += len(names)
             for name in names:
-                members.append({"name": name, "country": "", "group": group, "position": position})
-    zero = {"FOR": 0, "AGAINST": 0, "ABSTENTION": 0, "DID_NOT_VOTE": 0}
+                country = "HU" if name == "Katalin Cseh" else ""
+                members.append({"name": name, "country": country, "group": group, "position": position})
+    zero = {"FOR": 0, "AGAINST": 0, "ABSTENTION": 0, "DID_NOT_VOTE": None}
     return {
         "key": "2023-libe-position",
         "date": "2023. november 14.",
@@ -171,7 +178,7 @@ def committee_vote():
             "DID_NOT_VOTE": "Nem szavazott",
         },
         "body": "Európai Parlament · LIBE szakbizottság",
-        "totals": {"FOR": 51, "AGAINST": 2, "ABSTENTION": 1, "DID_NOT_VOTE": 0},
+        "totals": {"FOR": 51, "AGAINST": 2, "ABSTENTION": 1, "DID_NOT_VOTE": None},
         "members": sorted(members, key=lambda member: member["name"].casefold()),
         "group_stats": [
             {
