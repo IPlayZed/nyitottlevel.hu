@@ -86,6 +86,27 @@ class SiteTests(unittest.TestCase):
         self.assertEqual(self.page.locator(".moving-letter .letter-pocket").count(), 1)
         self.assertEqual(self.page.locator(".moving-letter .letter-seal").count(), 0)
         self.assertEqual(self.page.locator("mail-story .mail-opening-label").count(), 1)
+        for step in range(4):
+            self.page.locator(f'mail-story [data-step="{step}"]').click()
+            finite_animations = self.page.locator("mail-story .mail-illustration").evaluate("""illustration => {
+              const finite = [];
+              const nodes = [illustration, ...illustration.querySelectorAll('*')];
+              for (const node of nodes) {
+                for (const pseudo of [null, '::before', '::after']) {
+                  const style = getComputedStyle(node, pseudo);
+                  const names = style.animationName.split(',').map(value => value.trim());
+                  const counts = style.animationIterationCount.split(',').map(value => value.trim());
+                  names.forEach((name, index) => {
+                    if (name !== 'none' && counts[index % counts.length] !== 'infinite') {
+                      finite.push(`${node.className || node.tagName}${pseudo || ''}: ${name}`);
+                    }
+                  });
+                }
+              }
+              return finite;
+            }""")
+            self.assertEqual(finite_animations, [], f"Mail-story step {step + 1} has finite animations")
+        self.page.locator('mail-story [data-step="0"]').click()
         self.page.locator("mail-story [data-mail-next]").click()
         self.assertIn("végpontok közötti titkosítás", self.page.locator("mail-story h3").inner_text())
         mail_story = self.page.locator("mail-story")

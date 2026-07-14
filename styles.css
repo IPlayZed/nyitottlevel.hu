@@ -1129,12 +1129,12 @@ myth-quiz {
   font-weight: 900;
   opacity: 0;
   text-transform: uppercase;
-  animation: mail-opening-label 3s ease both;
+  animation: mail-opening-label 5.4s ease-in-out infinite;
 }
 
-.mail-object.is-postman-opened::before { animation: mail-open-left 3s ease both; }
-.mail-object.is-postman-opened::after { animation: mail-open-right 3s ease both; }
-.mail-object.is-postman-opened .mail-note { animation: mail-note-open 3s ease both; }
+.mail-object.is-postman-opened::before { animation: mail-open-left 5.4s ease-in-out infinite; }
+.mail-object.is-postman-opened::after { animation: mail-open-right 5.4s ease-in-out infinite; }
+.mail-object.is-postman-opened .mail-note { animation: mail-note-open 5.4s ease-in-out infinite; }
 
 .mail-lock {
   position: absolute;
@@ -2646,8 +2646,8 @@ footer p strong { color: var(--mustard); }
 .hero-postman .postman-arm--back,
 .hero-postman .postman-leg--front { animation: postman-limb 650ms ease-in-out infinite alternate-reverse; }
 .mail-postman { bottom: 6px; left: 7%; transform: scale(.82); transition: left 500ms cubic-bezier(.2,.8,.2,1), transform 500ms cubic-bezier(.2,.8,.2,1); }
-.mail-postman--step-0 { animation: mail-postman-open 3s ease both; }
-.mail-postman--step-0 .postman-arm--front { animation: mail-postman-arm-open 3s ease both; }
+.mail-postman--step-0 { animation: mail-postman-open 5.4s ease-in-out infinite; }
+.mail-postman--step-0 .postman-arm--front { animation: mail-postman-arm-open 5.4s ease-in-out infinite; }
 .mail-postman--step-1 { left: 11%; transform: scale(.86) rotate(-2deg); }
 .mail-postman--step-1 .postman-arm--front { animation: mail-e2ee-attempt-arm 7.2s ease-in-out infinite; }
 .mail-postman--step-2 { left: 63%; transform: scale(.86) rotate(2deg); }
@@ -2928,27 +2928,33 @@ footer p,
 }
 @keyframes mail-postman-open {
   0%, 12% { left: 7%; transform: scale(.82); }
-  43%, 100% { left: 31%; transform: scale(.9) rotate(-2deg); }
+  36%, 72% { left: 31%; transform: scale(.9) rotate(-2deg); }
+  92%, 100% { left: 7%; transform: scale(.82); }
 }
 @keyframes mail-postman-arm-open {
-  0%, 38% { transform: rotate(-28deg); }
-  55%, 100% { transform: rotate(-105deg); }
+  0%, 30% { transform: rotate(-28deg); }
+  46%, 72% { transform: rotate(-105deg); }
+  88%, 100% { transform: rotate(-28deg); }
 }
 @keyframes mail-open-left {
-  0%, 48% { transform: rotate(34deg); }
-  72%, 100% { transform: rotate(-35deg) translate(-12px, -55px); }
+  0%, 38% { transform: rotate(34deg); }
+  55%, 72% { transform: rotate(-35deg) translate(-12px, -55px); }
+  90%, 100% { transform: rotate(34deg); }
 }
 @keyframes mail-open-right {
-  0%, 48% { transform: rotate(-34deg); }
-  72%, 100% { transform: rotate(35deg) translate(12px, -55px); }
+  0%, 38% { transform: rotate(-34deg); }
+  55%, 72% { transform: rotate(35deg) translate(12px, -55px); }
+  90%, 100% { transform: rotate(-34deg); }
 }
 @keyframes mail-note-open {
-  0%, 58% { transform: translateY(0); }
-  82%, 100% { transform: translateY(-65px) rotate(-2deg); }
+  0%, 46% { transform: translateY(0); }
+  62%, 72% { transform: translateY(-65px) rotate(-2deg); }
+  90%, 100% { transform: translateY(0); }
 }
 @keyframes mail-opening-label {
-  0%, 58% { opacity: 0; transform: translateY(5px); }
-  74%, 100% { opacity: 1; transform: none; }
+  0%, 48% { opacity: 0; transform: translateY(5px); }
+  62%, 72% { opacity: 1; transform: none; }
+  88%, 100% { opacity: 0; transform: translateY(5px); }
 }
 @keyframes mail-e2ee-attempt-arm {
   0%, 8%, 48%, 100% { transform: rotate(-28deg); }
