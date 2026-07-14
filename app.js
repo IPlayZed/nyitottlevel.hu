@@ -121,7 +121,7 @@ class MailStory extends ReactiveElement {
               </div>
               <div class="mail-e2ee-key">
                 <i aria-hidden="true"></i>
-                <span><b>A címzett készülékének kulcsa</b><small>Csak ez állítja vissza az üzenetet</small></span>
+                <span><b>Kulcs a címzett készülékén</b><small>Csak ezzel áll helyre az üzenet</small></span>
               </div>
               <i class="mail-e2ee-key-traveller" aria-hidden="true"></i>` : ""}
             ${item.scanner ? '<span class="mail-scanner"></span>' : ""}
@@ -466,13 +466,23 @@ class DetectionLab extends ReactiveElement {
           </div>
           <div class="rate-visuals">
             <figure><canvas class="population-canvas" width="500" height="500" aria-label="Tízezer üzenet kimeneteinek pontábrája"></canvas><figcaption>10 000 üzenet · egy pont egy üzenet</figcaption></figure>
-            <figure><canvas class="alert-canvas" width="500" height="250" aria-label="A riasztások kinagyított pontábrája"></canvas><figcaption>A riasztások kinagyítva</figcaption></figure>
+            <figure><canvas class="alert-canvas" width="500" height="250" aria-label="A riasztások kinagyított pontábrája"></canvas><figcaption data-alert-caption>A riasztások kinagyítva · egy pont egy riasztás</figcaption></figure>
           </div>
+          <section class="rate-magnifier" aria-labelledby="rate-magnifier-title">
+            <div><p class="mini-label">Láthatósági nagyítás</p><h4 id="rate-magnifier-title">A kevés találat se vesszen el a tízezer pont között</h4></div>
+            <p>Legfeljebb 20 nagy jelölést rajzolunk ki kategóriánként. A mellettük álló szám mutatja a teljes, egész üzenetre kerekített darabszámot.</p>
+            <div class="rare-count-grid" data-rare-counts></div>
+          </section>
           <div class="rate-results" aria-live="polite">
             <div class="true-result"><b data-tp>9</b><span>valódi találat</span></div>
             <div class="missed-result"><b data-fn>1</b><span>elszalasztott tiltott tartalom</span></div>
             <div class="false-result"><b data-fp>50</b><span>téves riasztás</span></div>
             <div class="true-negative-result"><b data-tn>9 940</b><span>helyesen békén hagyott üzenet</span></div>
+          </div>
+          <p class="rate-rounding">A darabszámok várható értékek, egész üzenetre kerekítve.</p>
+          <div class="rate-derived" aria-live="polite">
+            <div><span>Beállított specificitás</span><b data-specificity>99,5%</b><small>100% mínusz a tévespozitív-arány</small></div>
+            <div><span>Pozitív prediktív érték</span><b data-ppv>15,3%</b><small>A valódi találatok aránya az összes riasztás között</small></div>
           </div>
           <p class="rate-summary" id="rateNote" data-rate-summary></p>
           <div class="rate-legend" aria-label="Jelmagyarázat"><span class="is-tp">valódi találat</span><span class="is-fn">elszalasztott</span><span class="is-fp">téves riasztás</span><span class="is-tn">helyesen negatív</span></div>
@@ -538,7 +548,9 @@ class DetectionLab extends ReactiveElement {
     const fp = Math.round((total - positives) * (this.falseRate / 100));
     const tn = total - positives - fp;
     const flagged = tp + fp;
-    const falseShare = flagged ? (fp / flagged) * 100 : 0;
+    const falseShare = flagged ? (fp / flagged) * 100 : null;
+    const positivePredictiveValue = flagged ? (tp / flagged) * 100 : null;
+    const specificity = 100 - this.falseRate;
     const numberLocale = document.documentElement.lang || "hu";
     this.querySelector("[data-prevalence-output]").textContent = `${this.formatRate(this.prevalence)}%`;
     this.querySelector("[data-sensitivity-output]").textContent = `${this.sensitivity}%`;
@@ -547,12 +559,19 @@ class DetectionLab extends ReactiveElement {
     this.querySelector("[data-fn]").textContent = fn.toLocaleString(numberLocale);
     this.querySelector("[data-fp]").textContent = fp.toLocaleString(numberLocale);
     this.querySelector("[data-tn]").textContent = tn.toLocaleString(numberLocale);
-    this.querySelector("[data-rate-summary]").innerHTML = `<b>${flagged.toLocaleString(numberLocale)} riasztásból ${fp.toLocaleString(numberLocale)} téves:</b> az ellenőrzendő jelzések ${falseShare.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%-a ártatlan üzenetre mutatna ebben a példában.`;
+    this.querySelector("[data-specificity]").textContent = `${specificity.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+    this.querySelector("[data-ppv]").textContent = positivePredictiveValue === null
+      ? "Nem értelmezhető"
+      : `${positivePredictiveValue.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+    this.querySelector("[data-rate-summary]").innerHTML = flagged
+      ? `<b>${flagged.toLocaleString(numberLocale)} riasztásból ${fp.toLocaleString(numberLocale)} téves:</b> az ellenőrzendő jelzések ${falseShare.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%-a ártatlan üzenetre mutatna. A pozitív prediktív érték ${positivePredictiveValue.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%.`
+      : "<b>Nincs riasztás ennél a beállításnál.</b> A pozitív prediktív érték nem értelmezhető, mert nincs pozitívnak jelölt üzenet.";
     this.querySelectorAll("[data-rate]").forEach((button) => button.classList.toggle("is-active", Number(button.dataset.rate) === this.falseRate));
     this.querySelectorAll("[data-sensitivity]").forEach((button) => button.classList.toggle("is-active", Number(button.dataset.sensitivity) === this.sensitivity));
     this.querySelectorAll("[data-prevalence]").forEach((button) => button.classList.toggle("is-active", Number(button.dataset.prevalence) === this.prevalence));
     this.drawPopulation(tp, fn, fp, positives);
     this.drawAlerts(tp, fp);
+    this.drawRareCounts({ tp, fn, fp, tn });
   }
 
   drawPopulation(tp, fn, fp, positives) {
@@ -565,21 +584,31 @@ class DetectionLab extends ReactiveElement {
     for (let slot = 0; slot < 10000; slot += 1) this.drawCell(ctx, slot, size, colors.tn);
     const positiveSlots = Array.from({ length: positives }, (_, index) => Math.floor((index * 10000) / Math.max(1, positives)));
     const positiveSet = new Set(positiveSlots);
-    positiveSlots.forEach((slot, index) => this.drawCell(ctx, slot, size, index < tp ? colors.tp : colors.fn));
+    positiveSlots.forEach((slot, index) => {
+      const category = index < tp ? "tp" : "fn";
+      const categoryCount = category === "tp" ? tp : fn;
+      this.drawCell(ctx, slot, size, colors[category], categoryCount > 0 && categoryCount <= 20);
+    });
     let painted = 0;
     let cursor = 137;
     while (painted < fp) {
       const slot = cursor % 10000;
       cursor += 7919;
       if (positiveSet.has(slot)) continue;
-      this.drawCell(ctx, slot, size, colors.fp);
+      this.drawCell(ctx, slot, size, colors.fp, fp > 0 && fp <= 20);
       painted += 1;
     }
   }
 
-  drawCell(ctx, slot, size, color) {
+  drawCell(ctx, slot, size, color, highlight = false) {
+    const x = (slot % 100) * size;
+    const y = Math.floor(slot / 100) * size;
     ctx.fillStyle = color;
-    ctx.fillRect((slot % 100) * size + 0.6, Math.floor(slot / 100) * size + 0.6, size - 1.2, size - 1.2);
+    ctx.fillRect(x + 0.6, y + 0.6, size - 1.2, size - 1.2);
+    if (!highlight) return;
+    ctx.strokeStyle = "#fffdf8";
+    ctx.lineWidth = 1.4;
+    ctx.strokeRect(x + 0.7, y + 0.7, size - 1.4, size - 1.4);
   }
 
   drawAlerts(tp, fp) {
@@ -601,6 +630,35 @@ class DetectionLab extends ReactiveElement {
       ctx.arc(x, y, Math.max(1.5, size * 0.34), 0, Math.PI * 2);
       ctx.fill();
     }
+    const caption = total === 0
+      ? "Nincs riasztás a beállított példában"
+      : total > 1000
+        ? `Az összes ${total.toLocaleString(document.documentElement.lang || "hu")} riasztás arányait mutató 1 000 pontos minta`
+        : `A riasztások kinagyítva · ${total.toLocaleString(document.documentElement.lang || "hu")} pont, egy pont egy riasztás`;
+    this.querySelector("[data-alert-caption]").textContent = caption;
+    canvas.setAttribute("aria-label", caption);
+  }
+
+  drawRareCounts(counts) {
+    const numberLocale = document.documentElement.lang || "hu";
+    const categories = [
+      ["tp", "Valódi találat"],
+      ["fn", "Elszalasztott tiltott tartalom"],
+      ["fp", "Téves riasztás"],
+      ["tn", "Helyesen békén hagyott"],
+    ];
+    this.querySelector("[data-rare-counts]").innerHTML = categories.map(([key, label]) => {
+      const count = counts[key];
+      const shown = Math.min(count, 20);
+      const dots = count === 0
+        ? '<i class="rare-dot is-empty"></i>'
+        : Array.from({ length: shown }, () => '<i class="rare-dot"></i>').join("");
+      const more = count > shown ? '<i class="rare-more">+</i>' : "";
+      return `<article class="rare-count rare-count--${key}" aria-label="${label}: ${count.toLocaleString(numberLocale)}">
+        <div class="rare-dots" aria-hidden="true">${dots}${more}</div>
+        <b>${count.toLocaleString(numberLocale)}</b><span>${label}</span>
+      </article>`;
+    }).join("");
   }
 }
 
@@ -723,6 +781,99 @@ class PrivacyRoom extends ReactiveElement {
         event.preventDefault();
         state.room = keys[next];
         requestAnimationFrame(() => this.querySelector(`[data-room="${state.room}"]`)?.focus());
+      });
+    });
+  }
+}
+
+const surveillanceModes = {
+  targeted: {
+    tab: "Célzott vizsgálat",
+    kicker: "Előbb a konkrét gyanú, utána az adatgyűjtés",
+    title: "Egy körülhatárolt személy vagy fiók kerül a vizsgálatba",
+    summary: "A hatóság egy megnevezett célpontra, meghatározott adatkörre és időtartamra kér engedélyt. A vizsgálat elvben a kijelölt célpontra és az engedélyben meghatározott körre korlátozódik; mások adatai csak e körön belül kerülhetnek bele.",
+    who: "Egy előre azonosított célpont és az engedélyben meghatározott kör.",
+    suspicion: "A vizsgálat előtt kell konkrét, ellenőrizhető indok.",
+    system: "Csak az engedélyben meghatározott adatokat és időszakot; a felhasználás célja is kötött.",
+    later: "Az engedély lejárta, az adatok törlése, a naplózás és a jogorvoslat korlátozhatja a további felhasználást.",
+  },
+  mass: {
+    tab: "Általános átvizsgálás",
+    kicker: "Előbb mindenki a szűrőben, utána jön a kiválasztás",
+    title: "A teljes vagy nagyon széles felhasználói kör kommunikációját gép vizsgálja",
+    summary: "Nem kell embernek kézzel elolvasnia minden üzenetet. Már az is széles körű vizsgálat, ha minden üzenet tartalmából vagy jellemzőiből ellenőrzési adat készül, minden fájlt összevetnek egy keresőlistával, vagy minden beszélgetést gép osztályoz, és a rendszer csak ezután emel ki embereket.",
+    who: "Minden érintett, függetlenül attól, áll-e vele szemben egyedi gyanú; a kiválasztás csak a feldolgozás után történik.",
+    suspicion: "Az adatfeldolgozás már azelőtt megkezdődhet, hogy az érintettel szemben konkrét gyanú merülne fel.",
+    system: "A beállítástól függően tartalmat, lenyomatot, találati adatot vagy metaadatot.",
+    later: "A keresési lista, a küszöb vagy a cél későbbi módosítása új embereket tehet láthatóvá.",
+  },
+};
+
+class SurveillanceContrast extends HTMLElement {
+  connectedCallback() {
+    this.active = this.active || "targeted";
+    this.render();
+  }
+
+  render() {
+    const item = surveillanceModes[this.active];
+    const people = Array.from({ length: 30 }, (_, index) => {
+      const isTarget = index === 12;
+      const isFlagged = this.active === "mass" && [4, 12, 25].includes(index);
+      return `<span class="surveillance-person ${isTarget ? "is-target" : ""} ${isFlagged ? "is-flagged" : ""}" aria-hidden="true"><i></i></span>`;
+    }).join("");
+    this.innerHTML = `
+      <section class="surveillance-shell" aria-labelledby="surveillance-title">
+        <div class="surveillance-tabs" role="tablist" aria-label="A megfigyelés hatókörének összehasonlítása">
+          ${Object.entries(surveillanceModes).map(([key, mode]) => `<button type="button" id="surveillance-tab-${key}" role="tab" data-surveillance="${key}" aria-controls="surveillance-panel" aria-selected="${key === this.active}" tabindex="${key === this.active ? 0 : -1}">${mode.tab}</button>`).join("")}
+        </div>
+        <div class="surveillance-panel" id="surveillance-panel" role="tabpanel" aria-labelledby="surveillance-tab-${this.active}" tabindex="0">
+          <div class="surveillance-visual surveillance-visual--${this.active}" aria-label="${this.active === "targeted" ? "Harminc emberből egy előre kijelölt célpont kerül a vizsgálatba" : "Mind a harminc ember kommunikációja átmegy a szűrőn, amely hármat megjelöl"}">
+            <div class="surveillance-people">${people}</div>
+            <div class="surveillance-pipeline" aria-hidden="true"><span>${this.active === "targeted" ? "Célpontra szóló engedély" : "Mindenki átvizsgálása"}</span><i></i><b>${this.active === "targeted" ? "1 kijelölt célpont" : "3 gépi jelzés"}</b></div>
+            <p>${this.active === "targeted" ? "A rendszer nem vizsgálja át automatikusan mind a harminc ember teljes kommunikációját." : "A rendszer mind a 30 ember adatait feldolgozta, mielőtt hármat megjelölt."}</p>
+          </div>
+          <div class="surveillance-copy">
+            <p class="mini-label">${item.kicker}</p>
+            <h3 id="surveillance-title">${item.title}</h3>
+            <p class="surveillance-summary">${item.summary}</p>
+            <dl class="surveillance-facts">
+              <div><dt>Ki kerül be?</dt><dd>${item.who}</dd></div>
+              <div><dt>Mikor van gyanú?</dt><dd>${item.suspicion}</dd></div>
+              <div><dt>Mit lát a rendszer?</dt><dd>${item.system}</dd></div>
+              <div><dt>Mi történhet később?</dt><dd>${item.later}</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="metadata-note">
+          <span aria-hidden="true">◎</span>
+          <p><b>A metaadat sem „csak technikai adat”.</b> A címzett, időpont, hely, gyakoriság és csoporttagság a szöveg elolvasása nélkül is utalhat arra, hogy ki kivel dolgozik, ki járhat orvoshoz, szervezhet tüntetést vagy kérhet segítséget. A tartalom és a metaadat más, de mindkettő lehet érzékeny.</p>
+        </div>
+        <p class="surveillance-caveat"><b>Pontos megfogalmazás:</b> nem minden automatizált ellenőrzést minősít minden bíróság vagy jogszabály ugyanúgy „tömeges megfigyelésnek”. A technikai hatókört ezért külön mutatjuk meg: kinek az adatait dolgozza fel a rendszer még az egyedi gyanú felmerülése előtt.</p>
+        <div class="surveillance-consequences">
+          <article><span>01</span><h4>A gépi ellenőrzés is ellenőrzés</h4><p>A hozzáférés és a visszaélés kockázata akkor is fennáll, ha először algoritmus elemzi a tartalmat. Téves jelzésnél a privát tartalom emberi ellenőrhöz kerülhet.</p></article>
+          <article><span>02</span><h4>Visszatartó hatás</h4><p>Ha nem tudhatod, mikor emelnek ki egy beszélgetést, jogszerű, érzékeny kérdésekről is hallgathatsz. Ez újságírókat és forrásaikat, ügyvédeket és ügyfeleiket, orvosokat és betegeiket, aktivistákat és családokat is érinthet.</p></article>
+          <article><span>03</span><h4>Célkiterjesztés</h4><p>A szűk célra kiépített rendszer később más tartalmak keresésére, további jogsértések felderítésére vagy új hatóságok használatára is átállítható. Ezért számít a technikai korlát, nem csak a mai ígéret.</p></article>
+          <article><span>04</span><h4>A jó célhoz is kellenek korlátok</h4><p>Fontos közérdekű cél mellett is vizsgálni kell a szükségességet, az arányosságot, a független engedélyezést és felügyeletet, a törlést, az auditot és a jogorvoslatot.</p></article>
+        </div>
+        <div class="surveillance-sources" aria-label="A tömeges megfigyelés magyarázatának elsődleges forrásai">
+          <a href="https://infocuria.curia.europa.eu/tabs/redirect/juris/liste.jsf?language=hu&num=C-511/18" target="_blank" rel="noreferrer">Európai Unió Bírósága · általános és különbségtétel nélküli adatmegőrzés <span aria-hidden="true">↗</span></a>
+          <a href="https://hudoc.echr.coe.int/eng?i=001-210077" target="_blank" rel="noreferrer">EJEB · célzott és tömeges lehallgatás garanciái <span aria-hidden="true">↗</span></a>
+          <a href="https://www.coe.int/en/web/portal/-/council-of-europe-alerts-governments-on-risks-of-digital-tracking-and-surveillance" target="_blank" rel="noreferrer">Európa Tanács · túl széles megfigyelés és öncenzúra <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>`;
+
+    this.querySelectorAll("[data-surveillance]").forEach((button) => {
+      button.addEventListener("click", () => {
+        this.active = button.dataset.surveillance;
+        this.render();
+      });
+      button.addEventListener("keydown", (event) => {
+        if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+        event.preventDefault();
+        this.active = this.active === "targeted" ? "mass" : "targeted";
+        this.render();
+        requestAnimationFrame(() => this.querySelector(`[data-surveillance="${this.active}"]`)?.focus());
       });
     });
   }
@@ -1340,12 +1491,31 @@ customElements.define("encryption-layers", EncryptionLayers);
 customElements.define("version-switcher", VersionSwitcher);
 customElements.define("detection-lab", DetectionLab);
 customElements.define("privacy-room", PrivacyRoom);
+customElements.define("surveillance-contrast", SurveillanceContrast);
 customElements.define("abuse-simulator", AbuseSimulator);
 customElements.define("abuse-history", AbuseHistory);
 customElements.define("vote-simulator", VoteSimulator);
 customElements.define("vote-explorer", VoteExplorer);
 customElements.define("safeguard-builder", SafeguardBuilder);
 customElements.define("myth-quiz", MythQuiz);
+
+const connectionCards = [...document.querySelectorAll("[data-connection-card]")];
+const connectionCount = document.querySelector("[data-connection-count]");
+document.querySelectorAll("[data-connection-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const active = button.dataset.connectionFilter;
+    document.querySelectorAll("[data-connection-filter]").forEach((filter) => {
+      filter.setAttribute("aria-pressed", String(filter === button));
+    });
+    let visible = 0;
+    connectionCards.forEach((card) => {
+      const matches = active === "all" || card.dataset.tags.split(" ").includes(active);
+      card.hidden = !matches;
+      if (matches) visible += 1;
+    });
+    if (connectionCount) connectionCount.textContent = String(visible);
+  });
+});
 
 document.querySelectorAll("[data-flip-card]").forEach((card) => {
   card.querySelectorAll("[data-flip]").forEach((button) => button.addEventListener("click", () => {
@@ -1380,18 +1550,26 @@ mobileMenu?.querySelectorAll("a").forEach((link) =>
 );
 
 const motionToggle = document.querySelector("#motionToggle");
+const updateMotionToggle = (reduced) => {
+  if (!motionToggle) return;
+  motionToggle.setAttribute("aria-pressed", String(reduced));
+  motionToggle.querySelector(".motion-icon").textContent = reduced ? "▶" : "Ⅱ";
+  motionToggle.querySelector(".button-label").textContent = reduced ? "Animáció indítása" : "Animáció leállítása";
+  motionToggle.title = reduced ? "A mozgó ábrák újraindítása" : "A mozgó ábrák leállítása";
+};
 motionToggle?.addEventListener("click", () => {
   const reduced = document.documentElement.dataset.reduceMotion === "true";
-  document.documentElement.dataset.reduceMotion = String(!reduced);
-  motionToggle.setAttribute("aria-pressed", String(!reduced));
-  motionToggle.querySelector(".button-label").textContent = reduced ? "Mozgás csökkentése" : "Mozgás bekapcsolása";
-  localStorage.setItem("reduce-motion", String(!reduced));
+  const nextReduced = !reduced;
+  document.documentElement.dataset.reduceMotion = String(nextReduced);
+  updateMotionToggle(nextReduced);
+  localStorage.setItem("reduce-motion", String(nextReduced));
 });
 
 if (localStorage.getItem("reduce-motion") === "true") {
   document.documentElement.dataset.reduceMotion = "true";
-  motionToggle?.setAttribute("aria-pressed", "true");
-  if (motionToggle) motionToggle.querySelector(".button-label").textContent = "Mozgás bekapcsolása";
+  updateMotionToggle(true);
+} else {
+  updateMotionToggle(false);
 }
 
 const revealObserver = new IntersectionObserver(

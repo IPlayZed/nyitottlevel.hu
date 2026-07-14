@@ -1,6 +1,7 @@
 import functools
 import http.server
 import pathlib
+import re
 import tarfile
 import threading
 import unittest
@@ -60,7 +61,7 @@ class SiteTests(unittest.TestCase):
         self.assertGreaterEqual(float(self.page.evaluate("parseFloat(getComputedStyle(document.querySelector('.risk-grid p')).fontSize)")), 15)
         overflow = self.page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
         self.assertLessEqual(overflow, 1)
-        self.assertEqual(self.page.locator("main > section").count(), 11)
+        self.assertEqual(self.page.locator("main > section").count(), 12)
         self.assertEqual(self.page.locator("[data-language-toggle]").count(), 0)
         self.assertEqual(self.page.locator('script[src^="locales/"]').count(), 0)
         self.assertEqual(self.page.locator('script[src="full-i18n.js"]').count(), 0)
@@ -142,11 +143,93 @@ class SiteTests(unittest.TestCase):
         self.assertEqual(self.page.locator("detection-lab [data-fn]").inner_text(), "30")
         self.assertEqual(self.page.locator("detection-lab [data-fp]").inner_text(), "99")
         self.assertEqual(self.page.locator("detection-lab [data-tn]").inner_text().replace("\xa0", "").replace(" ", ""), "9801")
+        self.assertEqual(self.page.locator("detection-lab [data-specificity]").inner_text(), "99,0%")
+        self.assertEqual(self.page.locator("detection-lab [data-ppv]").inner_text(), "41,4%")
         self.assertEqual(self.page.locator(".population-canvas").count(), 1)
         self.page.get_by_role("tab", name="Újságíró", exact=True).click()
         self.assertIn("visszaélés bizonyítékát", self.page.locator("privacy-room h3").inner_text())
         self.assertIn("person-figure--journalist", self.page.locator("privacy-room .person-figure").get_attribute("class"))
         self.assertEqual(self.page.locator("privacy-room .person-gear").inner_text(), "PRESS")
+
+    def test_targeted_and_mass_surveillance_are_visually_distinct(self):
+        explainer = self.page.locator("surveillance-contrast")
+        self.assertEqual(explainer.get_by_role("tab").count(), 2)
+        self.assertEqual(explainer.locator(".surveillance-person").count(), 30)
+        self.assertEqual(explainer.locator(".surveillance-person.is-target").count(), 1)
+        self.assertIn("nem vizsgálja át automatikusan mind a harminc", explainer.inner_text().lower())
+        explainer.get_by_role("tab", name="Általános átvizsgálás").click()
+        self.assertEqual(explainer.locator(".surveillance-person.is-flagged").count(), 3)
+        copy = explainer.inner_text().lower()
+        self.assertIn("nem kell embernek kézzel elolvasnia", copy)
+        self.assertIn("metaadat", copy)
+        self.assertIn("mind a 30 ember adatait", copy)
+        for link in explainer.locator(".surveillance-sources a").all():
+            self.assertTrue(link.get_attribute("href").startswith("https://"))
+
+    def test_connection_directory_separates_help_research_and_community(self):
+        directory = self.page.locator("#kapcsolodas")
+        cards = directory.locator("[data-connection-card]")
+        self.assertEqual(cards.count(), 16)
+        self.assertEqual(directory.locator("[data-connection-filter]").count(), 4)
+        directory.get_by_role("button", name="Segítség és panasz").click()
+        visible_help = directory.locator("[data-connection-card]:visible")
+        self.assertEqual(visible_help.count(), 6)
+        self.assertTrue(any("NAIH" in text for text in visible_help.all_inner_texts()))
+        self.assertEqual(directory.locator("[data-connection-count]").inner_text(), "6")
+        directory.get_by_role("button", name="Közösség és részvétel").click()
+        visible_community = directory.locator("[data-connection-card]:visible")
+        self.assertGreaterEqual(visible_community.count(), 7)
+        self.assertTrue(any("H.A.C.K." in text for text in visible_community.all_inner_texts()))
+        for link in cards.locator("a").all():
+            self.assertTrue(link.get_attribute("href").startswith("https://"))
+
+    def test_detection_math_invariants_and_zero_alert_state(self):
+        cases = (
+            (0, 0, 0),
+            (0.1, 90, 0.5),
+            (1, 70, 1),
+            (50, 50, 50),
+            (100, 100, 100),
+        )
+        for prevalence, sensitivity, false_rate in cases:
+            with self.subTest(prevalence=prevalence, sensitivity=sensitivity, false_rate=false_rate):
+                self.page.locator("#prevalence").fill(str(prevalence))
+                self.page.locator("#sensitivity").fill(str(sensitivity))
+                self.page.locator("#falseRate").fill(str(false_rate))
+                counts = [
+                    int(self.page.locator(f"detection-lab [{field}]").inner_text().replace("\xa0", "").replace(" ", ""))
+                    for field in ("data-tp", "data-fn", "data-fp", "data-tn")
+                ]
+                positives = round(10000 * prevalence / 100)
+                self.assertEqual(sum(counts), 10000)
+                self.assertEqual(counts[0] + counts[1], positives)
+                self.assertEqual(counts[2] + counts[3], 10000 - positives)
+
+        self.page.locator("#prevalence").fill("0")
+        self.page.locator("#sensitivity").fill("0")
+        self.page.locator("#falseRate").fill("0")
+        self.assertEqual(self.page.locator("detection-lab [data-ppv]").inner_text(), "Nem értelmezhető")
+        self.assertIn("Nincs riasztás", self.page.locator("detection-lab [data-rate-summary]").inner_text())
+        self.assertIn("Nincs riasztás", self.page.locator("detection-lab [data-alert-caption]").inner_text())
+
+        self.page.locator("#prevalence").fill("0.1")
+        self.page.locator("#sensitivity").fill("90")
+        self.page.locator("#falseRate").fill("0.5")
+        rare_cards = self.page.locator("detection-lab .rare-count")
+        self.assertEqual(rare_cards.count(), 4)
+        self.assertEqual(rare_cards.nth(0).locator(".rare-dot").count(), 9)
+        self.assertEqual(rare_cards.nth(1).locator(".rare-dot").count(), 1)
+        self.assertEqual(rare_cards.nth(2).locator(".rare-dot").count(), 20)
+        self.assertEqual(rare_cards.nth(2).locator(".rare-more").count(), 1)
+        self.assertEqual(rare_cards.nth(0).get_attribute("aria-label"), "Valódi találat: 9")
+
+    def test_report_source_count_is_precise_without_claiming_every_source_is_primary(self):
+        report = (ROOT / "chat-control-report.md").read_text(encoding="utf-8")
+        urls = set(re.findall(r"https?://[^\s)>]+", report))
+        self.assertEqual(len(urls), 61)
+        banner = self.page.locator(".action-banner h3").inner_text()
+        self.assertIn("61 egyedi hivatkozott forrással", banner)
+        self.assertNotIn("61 elsődleges", banner)
 
     def test_abuse_paths_and_documented_cases(self):
         self.assertEqual(self.page.locator("abuse-simulator [data-abuse]").count(), 6)
@@ -206,7 +289,11 @@ class SiteTests(unittest.TestCase):
               };
             }"""
         )
-        self.assertEqual(quiz_shape, {"total": 10, "trueCount": 5, "categories": 10, "longest": 2, "bank": 100})
+        self.assertEqual(
+            {key: quiz_shape[key] for key in ("total", "trueCount", "categories", "bank")},
+            {"total": 10, "trueCount": 5, "categories": 10, "bank": 100},
+        )
+        self.assertLessEqual(quiz_shape["longest"], 2)
         first_ids = self.page.evaluate("() => document.querySelector('myth-quiz').questions.map(question => question.id)")
         for _ in range(10):
             current_answer = self.page.evaluate(
@@ -221,6 +308,12 @@ class SiteTests(unittest.TestCase):
 
     def test_mobile_navigation_and_layout(self):
         self.page.set_viewport_size({"width": 390, "height": 844})
+        motion = self.page.locator("#motionToggle")
+        self.assertTrue(motion.is_visible())
+        self.assertEqual(motion.locator(".button-label").inner_text(), "Animáció leállítása")
+        motion.click()
+        self.assertEqual(motion.locator(".button-label").inner_text(), "Animáció indítása")
+        self.assertEqual(motion.get_attribute("aria-pressed"), "true")
         self.page.locator("#menuButton").click()
         self.assertEqual(self.page.locator("#menuButton").get_attribute("aria-expanded"), "true")
         self.assertTrue(self.page.locator("#mobileNav").is_visible())

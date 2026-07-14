@@ -50,8 +50,8 @@
 
       <div class="header-actions">
         <button class="quiet-button" id="motionToggle" type="button" aria-pressed="false">
-          <span aria-hidden="true">◌</span>
-          <span class="button-label">Mozgás csökkentése</span>
+          <span class="motion-icon" aria-hidden="true">Ⅱ</span>
+          <span class="button-label">Animáció leállítása</span>
         </button>
         <button class="menu-button" id="menuButton" type="button" aria-expanded="false" aria-controls="mobileNav">
           <span></span><span></span><span></span>
@@ -307,6 +307,13 @@
           </article>
         </div>
 
+        <div class="surveillance-intro reveal">
+          <p class="chapter-number">05/A · Célzott vagy tömeges?</p>
+          <h2>Nem az a kérdés, hogy ember olvas-e el minden üzenetet</h2>
+          <p>A vizsgálat széles hatókörét nem szűkíti le az, hogy először gép végzi. A döntő különbség az, hogy előre meghatározott, konkrét célpontot vizsgálnak-e, vagy egy teljes vagy nagyon széles felhasználói kör kommunikációját dolgozzák fel, és csak utána választják ki, kit nézzenek meg közelebbről.</p>
+        </div>
+        <surveillance-contrast class="reveal"></surveillance-contrast>
+
         <div class="abuse-intro reveal">
           <p class="chapter-number">05/B · Politikai visszaélési lehetőség</p>
           <h2>Mi történik, ha később más kerül a keresőlistára?</h2>
@@ -429,9 +436,118 @@
         <div class="action-banner reveal">
           <div>
             <span>Teljes háttéranyag</span>
-            <h3>12 600 szavas, 61 elsődleges forrással ellenőrzött jelentés</h3>
+            <h3>12 600 szavas jelentés, 61 egyedi hivatkozott forrással</h3>
           </div>
           <a class="primary-button primary-button--ink" href="chat-control-report.md">Jelentés megnyitása <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <section class="chapter story-section connection-section" id="kapcsolodas" data-chapter="9" aria-labelledby="connections-title">
+        <div class="chapter-heading reveal">
+          <p class="chapter-number">09 · Hová fordulhatsz?</p>
+          <h2 id="connections-title">Szervezetek, eszközök és közösségek, ahonnan továbbindulhatsz</h2>
+          <p>Más-más helyhez érdemes fordulni hivatalos panasszal, jogsegélykéréssel, technikai incidenssel, kutatási kérdéssel vagy közösségi kapcsolódásért. Válaszd ki, mire van szükséged; a kártyákon azt is jelezzük, mire nem való az adott hely.</p>
+        </div>
+
+        <div class="connection-route reveal" aria-label="Gyors útválasztó">
+          <article><span>Jogsérelem vagy adatvédelmi panasz</span><b>NAIH, TASZ vagy az ügy jellegétől függően a Magyar Helsinki Bizottság</b></article>
+          <i aria-hidden="true">→</i>
+          <article><span>Feltört fiók vagy kibertámadás</span><b>Az NKI incidensbejelentője; veszélyeztetett civileknek az Access Now segélyvonala</b></article>
+          <i aria-hidden="true">→</i>
+          <article><span>Kutatás, részvétel vagy közösség</span><b>EKINT, K-Monitor, H.A.C.K., EDPB, EUR-Lex és uniós fórumok</b></article>
+        </div>
+
+        <div class="connection-explorer reveal">
+          <div class="connection-filters" aria-label="Kapcsolódási pontok szűrése">
+            <button type="button" data-connection-filter="all" aria-pressed="true">Mind</button>
+            <button type="button" data-connection-filter="help" aria-pressed="false">Segítség és panasz</button>
+            <button type="button" data-connection-filter="research" aria-pressed="false">Kutatás és követés</button>
+            <button type="button" data-connection-filter="community" aria-pressed="false">Közösség és részvétel</button>
+          </div>
+          <p class="connection-count" role="status" aria-live="polite"><b data-connection-count>16</b> kapcsolódási pont látható</p>
+          <div class="connection-grid">
+            <article data-connection-card data-tags="help research">
+              <div><span>HU</span><em>Hatóság</em></div><h3>NAIH</h3>
+              <p>Adatvédelmi jogok, hivatalos panasz és közérdekű adatok. Állami felügyeleti hatóság, nem személyes ügyvéd.</p>
+              <a href="https://naih.hu/erintetti-jogok" target="_blank" rel="noreferrer">Érintetti jogok és panasz <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research">
+              <div><span>HU</span><em>Civil jogvédelem</em></div><h3>TASZ</h3>
+              <p>Állami megfigyelés, információszabadság, bejelentők és egyes adatvédelmi ügyek. Az ingyenes jogsegély ügyköre és kapacitása korlátozott.</p>
+              <a href="https://tasz.hu/ingyenes-jogsegelyszolgalat/" target="_blank" rel="noreferrer">Ingyenes jogsegély <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research">
+              <div><span>HU</span><em>Emberi jogok</em></div><h3>Magyar Helsinki Bizottság</h3>
+              <p>Hatósági túlkapás, rendőri intézkedés, fogvatartás és jogállami ügyek. Nem általános adatvédelmi ügyfélszolgálat; előbb ellenőrizd az ügykört.</p>
+              <a href="https://helsinki.hu/segitseg-kerese/" target="_blank" rel="noreferrer">Segítségkérés <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research">
+              <div><span>HU</span><em>Állami kiberbiztonság</em></div><h3>NBSZ NKI</h3>
+              <p>Kiberbiztonsági incidens és sérülékenység bejelentése, akár név nélkül. Nem rendőrségi feljelentésre vagy adatvédelmi panaszra szolgál, és nem civil jogsegélyszolgálat.</p>
+              <a href="https://nki.gov.hu/intezet/tartalom/incidens-bejelentes/" target="_blank" rel="noreferrer">Incidens bejelentése <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research">
+              <div><span>HU</span><em>Kutatóintézet</em></div><h3>Eötvös Károly Intézet</h3>
+              <p>Alkotmányossággal, az állami működés átláthatóságával, a magánszférával és a megfigyeléssel foglalkozó elemzések. Kutatási műhely, nem általános egyéni jogsegély.</p>
+              <a href="https://www.ekint.org/rolunk" target="_blank" rel="noreferrer">Bemutatkozás és elemzések <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research community">
+              <div><span>HU</span><em>Digitális civil eszközök</em></div><h3>K-Monitor Infohub</h3>
+              <p>Közérdekű adatigénylés, állami elszámoltathatóság, magyar útmutatók és műhelyek. Civil tudásbázis, nem hatóság, és nem vállal automatikusan jogi képviseletet.</p>
+              <a href="https://adatigenyles.k-monitor.hu/" target="_blank" rel="noreferrer">Információszabadság Infohub <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research community">
+              <div><span>HU</span><em>Nyilvános eszköz</em></div><h3>KiMitTud</h3>
+              <p>Közérdekű adatigénylést küldhetsz és követhetsz. A kérés és válasz nyilvános: érzékeny személyes adatot ne írj bele.</p>
+              <a href="https://kimittud.hu/help/about" target="_blank" rel="noreferrer">Az oldal működése <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community research">
+              <div><span>HU</span><em>Technológiai közösség</em></div><h3>H.A.C.K. / Hackerspace Budapest</h3>
+              <p>Önkéntes műhely, nyilvános közösségi csatornák és technológiai események. Nem professzionális segélyvonal vagy jogi szolgáltatás.</p>
+              <a href="https://www.hsbp.org/Kapcsolat" target="_blank" rel="noreferrer">Kapcsolat és közösségi csatornák <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community">
+              <div><span>HU</span><em>Jogvédő mozgalom</em></div><h3>Amnesty Magyarország</h3>
+              <p>Emberi jogi kampányok, oktatás, tagság és önkéntesség. Közösségi részvételre való, nem automatikus egyéni jogi képviselet.</p>
+              <a href="https://www.amnesty.hu/legy-tagunk/" target="_blank" rel="noreferrer">Csatlakozási lehetőségek <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community">
+              <div><span>HU</span><em>Civil hálózat</em></div><h3>Szabad Terek</h3>
+              <p>Független közösségi terek és civil szervezetek magyarországi hálózata. Helyi kapcsolódási pont, nem szakosított adatvédelmi segítség.</p>
+              <a href="https://szabadterek.hu/" target="_blank" rel="noreferrer">Közösségek és terek <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research">
+              <div><span>HU</span><em>EU-s testület</em></div><h3>Európai Adatvédelmi Testület</h3>
+              <p>Hivatalos uniós iránymutatások, vélemények és döntések. Egyéni panaszt a nemzeti hatósághoz, Magyarországon a NAIH-hoz kell vinni.</p>
+              <a href="https://www.edpb.europa.eu/role-edpb_hu" target="_blank" rel="noreferrer">Az EDPB szerepe magyarul <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research">
+              <div><span>HU</span><em>EU-s jogtár</em></div><h3>EUR-Lex</h3>
+              <p>Jogszabályok, előkészítő dokumentumok és ítéletek hiteles uniós adatbázisa. Elsődleges forrás, nem jogi tanács.</p>
+              <a href="https://eur-lex.europa.eu/homepage.html?locale=hu" target="_blank" rel="noreferrer">EU-jog magyarul <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community research">
+              <div><span>HU</span><em>EU-s részvétel</em></div><h3>EP Petíciós Portál</h3>
+              <p>EU-s hatáskörbe tartozó, téged közvetlenül érintő ügyben petíciót nyújthatsz be vagy támogathatsz. Nem sürgősségi panaszeljárás.</p>
+              <a href="https://www.europarl.europa.eu/petitions/hu/home" target="_blank" rel="noreferrer">Petíciók magyarul <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community research">
+              <div><span>HU</span><em>EU-s konzultáció</em></div><h3>Uniós nyilvános konzultációk</h3>
+              <p>Uniós kezdeményezések követése, visszajelzések és nyilvános konzultációk. Szakpolitikai részvétel, nem egyéni jogorvoslat.</p>
+              <a href="https://ec.europa.eu/info/law/better-regulation/have-your-say_hu" target="_blank" rel="noreferrer">Európai Bizottság konzultációi <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research community">
+              <div><span>EN</span><em>Európai civil hálózat</em></div><h3>EDRi</h3>
+              <p>Digitális jogokkal kapcsolatos szakpolitika, kampányok és több mint ötven tagszervezet. Angol nyelvű európai hálózat, nem nyújt egyéni jogsegélyt.</p>
+              <a href="https://edri.org/about-us/" target="_blank" rel="noreferrer">Hálózat és témák <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research">
+              <div><span>EN</span><em>Digitális segélyvonal</em></div><h3>Access Now Helpline</h3>
+              <p>Nonstop technikai segítség veszélyeztetett civileknek és szervezeteknek digitális támadáskor. Nem általános fogyasztói IT-segítség; a tájékoztató nem sorolja fel a magyart a támogatott nyelvek között.</p>
+              <a href="https://www.accessnow.org/help/" target="_blank" rel="noreferrer">Jogosultság és biztonságos kapcsolat <span aria-hidden="true">↗</span></a>
+            </article>
+          </div>
+          <p class="connection-disclaimer"><b>Miért ilyen részletes a jelölés?</b> A felsorolás tájékozódási kiindulópont, nem rangsor és nem minőségi ajánlás. A hatóságok, civil szervezetek, közösségek és adatbázisok feladata eltérő; kapcsolatfelvétel előtt ellenőrizd az ügykört és az adatkezelési tájékoztatót.</p>
         </div>
       </section>
 
@@ -483,6 +599,7 @@
       </div>
       <p><strong>Fontos:</strong> ezt az oldalt nem ügyvédi iroda, jogi szakértői testület vagy újságíró-szerkesztőség ellenőrizte. Egy aggódó állampolgár készítette, hogy felhívja a figyelmet a technikai és alapjogi részletekre. Nem jogi tanács; ellenőrizd az állításokat a hivatkozott elsődleges forrásokban. Kutatási határnap: 2026. július 14. A forráskód AGPL-3.0-or-later licenc alatt érhető el.</p>
       <nav class="footer-links" aria-label="Oldal- és projektkapcsolatok">
+        <a href="#kapcsolodas">Kapcsolódási pontok</a>
         <a href="https://github.com/IPlayZed/nyitottlevel.hu/issues/new?template=feedback_hu.yml" target="_blank" rel="noreferrer">Visszajelzés ↗</a>
         <a href="https://github.com/IPlayZed/nyitottlevel.hu" target="_blank" rel="noreferrer">Forráskód ↗</a>
         <a href="LICENSE">AGPL-3.0 licenc</a>

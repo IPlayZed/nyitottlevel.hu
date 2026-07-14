@@ -26,6 +26,8 @@ Then open `http://localhost:4173`.
 - `scripts/build_vote_data.py` — reproducible generation of static vote data from reviewed roll-call records
 - `chat-control-report.md` — detailed research report and bibliography
 - `tests/test_site.py` — Playwright-based end-to-end browser tests
+- `tests/test_mobile_profiles.py` — interactive layout checks across every unique viewport in Playwright's built-in Chromium mobile-device catalogue; it captures nine state screenshots per viewport and writes a geometry/font-size analysis manifest
+- `tests/test_desktop_profiles.py` — stateful visual checks for the documented desktop support matrix
 
 Previous multilingual builds are preserved locally under the ignored `backups/` directory. Neither the archives nor the superseded localisation runtime files are included in the public repository.
 
@@ -37,7 +39,13 @@ The test suite uses the system-installed Chromium, so it does not download a sep
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/python -m unittest tests/test_site.py -v
+.venv/bin/python -m unittest tests/test_mobile_profiles.py -v
+.venv/bin/python -m unittest tests/test_desktop_profiles.py -v
 ```
+
+The mobile-profile run writes ignored artifacts to `test-artifacts/mobile/`: top-of-page, paused-motion header, action cards, both phases of mail step 2, user-key encryption, rare-result magnification, mass-surveillance mode, and the filtered help directory for every unique viewport. `manifest.json` records the tested state, screenshot paths, font-size floors, overlap clearances, route-label margins, horizontal overflow, and browser errors. These generated artifacts are intentionally excluded from Git.
+
+The desktop-profile run applies the same stateful visual review to the documented 1024, 1366, 1440, 1920, and 2560-pixel desktop widths. Its ignored screenshots and analysis manifest are written to `test-artifacts/desktop/`.
 
 ## Feedback
 

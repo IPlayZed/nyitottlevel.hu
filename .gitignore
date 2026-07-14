@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 .DS_Store
+test-artifacts/
 
 # Local snapshots are deliberately kept outside the public repository.
 backups/
