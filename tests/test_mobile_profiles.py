@@ -6,6 +6,7 @@ import pathlib
 import threading
 import unittest
 
+from PIL import Image, ImageStat
 from playwright.sync_api import sync_playwright
 
 
@@ -93,6 +94,16 @@ class ChromiumMobileProfileTests(unittest.TestCase):
             f"{label} escapes right",
         )
 
+    def assert_not_black_frame(self, path, label):
+        with Image.open(path) as image:
+            sample = image.convert("L").resize((32, 32))
+            low, high = sample.getextrema()
+            mean = ImageStat.Stat(sample).mean[0]
+            black_fraction = sum(pixel <= 8 for pixel in sample.getdata()) / (32 * 32)
+        self.assertGreater(mean, 10, f"{label}: screenshot is effectively black")
+        self.assertGreater(high - low, 8, f"{label}: screenshot has no visible content variation")
+        self.assertLess(black_fraction, .08, f"{label}: {black_fraction:.1%} of the screenshot is black")
+
     def test_all_builtin_chromium_mobile_viewport_sizes_interactively(self):
         self.assertGreaterEqual(self.total_profile_count, 50)
         for profile_index, name, raw_descriptor in self.profiles:
@@ -162,9 +173,16 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     if menu.is_visible():
                         menu.click()
                         self.assertTrue(page.locator("#mobileNav").is_visible(), profile_label)
+                        navigation_path = artifact_dir / "02b-navigation-open.jpg"
+                        page.screenshot(path=str(navigation_path), type="jpeg", quality=65, animations="disabled")
+                        screenshot_paths["navigation_open"] = str(navigation_path.relative_to(ROOT))
                         menu.click()
                     else:
                         self.assertTrue(page.locator(".desktop-nav").is_visible(), profile_label)
+                        page.locator(".desktop-nav .nav-group").first.hover()
+                        navigation_path = artifact_dir / "02b-navigation-open.jpg"
+                        page.screenshot(path=str(navigation_path), type="jpeg", quality=65, animations="disabled")
+                        screenshot_paths["navigation_open"] = str(navigation_path.relative_to(ROOT))
 
                     header_path = artifact_dir / "02-header-motion-paused.jpg"
                     page.locator(".site-header").screenshot(path=str(header_path), type="jpeg", quality=65)
@@ -190,6 +208,14 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     page.locator(".action-grid").screenshot(path=str(action_path), type="jpeg", quality=58)
                     screenshot_paths["action_cards"] = str(action_path.relative_to(ROOT))
 
+                    institution_intro_path = artifact_dir / "03a-institution-intro.jpg"
+                    page.locator("#intezmenyek .chapter-heading").screenshot(path=str(institution_intro_path), type="jpeg", quality=58, animations="disabled")
+                    screenshot_paths["institution_intro"] = str(institution_intro_path.relative_to(ROOT))
+
+                    institution_path = artifact_dir / "03b-institution-cards.jpg"
+                    page.locator("#intezmenyek .institution-path").screenshot(path=str(institution_path), type="jpeg", quality=58, animations="disabled")
+                    screenshot_paths["institution_cards"] = str(institution_path.relative_to(ROOT))
+
                     page.locator('mail-story [data-step="1"]').click()
                     page.evaluate("""phase => {
                       const story = document.querySelector('mail-story');
@@ -207,6 +233,10 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                       const story = document.querySelector('mail-story');
                       story.querySelector('.mail-e2ee-no-key').style.opacity = '0';
                       story.querySelector('.mail-e2ee-key').style.opacity = '1';
+                      story.querySelector('.mail-object').classList.add('is-open');
+                      story.querySelector('.mail-envelope-flap').style.transform = 'scaleY(-1)';
+                      story.querySelector('.mail-note').style.transform = 'translateY(-76px) rotate(-2deg)';
+                      story.querySelector('.mail-lock').style.opacity = '.3';
                     }""")
                     illustration = page.locator("mail-story .mail-illustration").bounding_box()
                     key_card = page.locator("mail-story .mail-e2ee-key")
@@ -223,30 +253,78 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     page.locator("mail-story .interactive-card").screenshot(path=str(mail_path), type="jpeg", quality=58)
                     screenshot_paths["mail_recipient_key"] = str(mail_path.relative_to(ROOT))
 
+                    page.locator('mail-story [data-step="2"]').click()
+                    page.evaluate("""() => {
+                      const story = document.querySelector('mail-story');
+                      story.querySelectorAll('*').forEach(element => { element.style.animation = 'none'; });
+                      story.querySelector('.mail-object').classList.add('is-open');
+                      story.querySelector('.mail-envelope-flap').style.transform = 'scaleY(-1)';
+                      story.querySelector('.mail-note').style.transform = 'translateY(-88px) rotate(-1deg)';
+                      story.querySelector('.mail-lock').style.opacity = '.2';
+                      const scanner = story.querySelector('.mail-scanner');
+                      scanner.style.opacity = '1';
+                      scanner.style.transform = 'translate(-50%,-20px)';
+                    }""")
+                    inspection_path = artifact_dir / "05b-mail-service-inspection.jpg"
+                    page.locator("mail-story .interactive-card").screenshot(
+                        path=str(inspection_path), type="jpeg", quality=58
+                    )
+                    screenshot_paths["mail_service_inspection"] = str(inspection_path.relative_to(ROOT))
+
+                    page.locator('mail-story [data-step="3"]').click()
+                    page.evaluate("""() => {
+                      const story = document.querySelector('mail-story');
+                      story.querySelectorAll('*').forEach(element => { element.style.animation = 'none'; });
+                      story.querySelector('.mail-object').classList.add('is-open');
+                      story.querySelector('.mail-envelope-flap').style.transform = 'scaleY(-1)';
+                      const note = story.querySelector('.mail-note');
+                      note.style.transform = 'none';
+                      const noteBox = note.getBoundingClientRect();
+                      const screenBox = story.querySelector('.mail-device-screen').getBoundingClientRect();
+                      const travel = screenBox.left + screenBox.width / 2 - noteBox.left - noteBox.width / 2;
+                      note.style.transform = `translate(${travel}px,-14px) rotate(-2deg)`;
+                      story.querySelector('.mail-lock').style.opacity = '0';
+                      const scanner = story.querySelector('.mail-scanner');
+                      scanner.style.opacity = '1';
+                      scanner.style.transform = 'translate(-50%,0)';
+                    }""")
+                    before_path = artifact_dir / "05c-mail-before-seal.jpg"
+                    page.locator("mail-story .interactive-card").screenshot(
+                        path=str(before_path), type="jpeg", quality=58
+                    )
+                    screenshot_paths["mail_before_seal"] = str(before_path.relative_to(ROOT))
+
                     encryption_label_margins = []
-                    for mode in ("https", "providerRest", "userRest", "e2ee"):
+                    encryption_captures = {
+                        "https": ("transport_encryption", "06a-transport-encryption.jpg"),
+                        "providerRest": ("provider_key_encryption", "06b-provider-key-encryption.jpg"),
+                        "userRest": ("user_key_encryption", "06c-user-key-encryption.jpg"),
+                        "e2ee": ("e2ee_encryption", "06d-e2ee-encryption.jpg"),
+                    }
+                    for mode, (screenshot_key, filename) in encryption_captures.items():
                         page.locator(f'encryption-layers [data-encryption="{mode}"]').click()
-                        diagram = page.locator("encryption-layers .crypto-diagram").bounding_box()
+                        diagram = page.locator("encryption-layers .lock-story-stage").bounding_box()
                         labels = page.locator(
-                            "encryption-layers .crypto-packet:visible, "
-                            "encryption-layers .crypto-key-chip:visible, "
-                            "encryption-layers .crypto-access-state:visible"
+                            "encryption-layers .story-message:visible, "
+                            "encryption-layers .story-key:visible, "
+                            "encryption-layers .story-no-key:visible, "
+                            "encryption-layers .provider-window:visible, "
+                            "encryption-layers .story-track > b:visible"
                         )
                         for index, label in enumerate(labels.all()):
                             label_box = label.bounding_box()
                             self.assert_inside(
                                 label_box,
                                 diagram,
-                                f"{profile_label}: {mode} diagram label {index + 1}",
+                                f"{profile_label}: {mode} story label {index + 1}",
                             )
                             encryption_label_margins.append(round(min(
                                 label_box["x"] - diagram["x"],
                                 diagram["x"] + diagram["width"] - label_box["x"] - label_box["width"],
                             ), 2))
                         graphics = page.locator(
-                            "encryption-layers .crypto-device:visible, "
-                            "encryption-layers .crypto-server:visible, "
-                            "encryption-layers .crypto-database:visible"
+                            "encryption-layers .story-avatar:visible, "
+                            "encryption-layers .journey-mail:visible"
                         )
                         for index, graphic in enumerate(graphics.all()):
                             graphic_box = graphic.bounding_box()
@@ -260,35 +338,41 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                                 diagram["x"] + diagram["width"] - 6,
                                 f"{profile_label}: {mode} graphic {index + 1} lacks right shadow clearance",
                             )
-                        states = [
-                            state.bounding_box()
-                            for state in page.locator("encryption-layers .crypto-access-state:visible").all()
-                        ]
-                        if len(states) == 2:
-                            first, second = states
-                            separated = (
-                                first["x"] + first["width"] <= second["x"]
-                                or second["x"] + second["width"] <= first["x"]
-                                or first["y"] + first["height"] <= second["y"]
-                                or second["y"] + second["height"] <= first["y"]
-                            )
-                            self.assertTrue(separated, f"{profile_label}: {mode} access-state chips overlap")
-                        if mode == "userRest":
-                            encryption_path = artifact_dir / "06-encryption-user-key.jpg"
-                            page.locator("encryption-layers .encryption-shell").screenshot(
-                                path=str(encryption_path), type="jpeg", quality=58
-                            )
-                            screenshot_paths["encryption_user_key"] = str(encryption_path.relative_to(ROOT))
+                        hub = page.locator("encryption-layers .story-hub")
+                        self.assert_inside(
+                            hub.locator(".provider-window").bounding_box(),
+                            hub.bounding_box(),
+                            f"{profile_label}: {mode} provider view",
+                        )
+                        encryption_path = artifact_dir / filename
+                        page.locator("encryption-layers .encryption-shell").screenshot(
+                            path=str(encryption_path), type="jpeg", quality=58
+                        )
+                        screenshot_paths[screenshot_key] = str(encryption_path.relative_to(ROOT))
 
                     magnifier_path = artifact_dir / "07-rare-result-magnifier.jpg"
                     page.locator("detection-lab .rate-magnifier").screenshot(path=str(magnifier_path), type="jpeg", quality=62)
                     screenshot_paths["rare_result_magnifier"] = str(magnifier_path.relative_to(ROOT))
+
+                    page.locator("#messageTotal").fill("1000000")
+                    variable_total_path = artifact_dir / "07b-variable-total-math.jpg"
+                    page.locator("detection-lab .base-rate").screenshot(path=str(variable_total_path), type="jpeg", quality=58, animations="disabled")
+                    screenshot_paths["variable_total_math"] = str(variable_total_path.relative_to(ROOT))
 
                     page.locator('surveillance-contrast [data-surveillance="mass"]').click()
                     mass_path = artifact_dir / "08-mass-surveillance.jpg"
                     page.locator("surveillance-contrast .surveillance-shell").screenshot(path=str(mass_path), type="jpeg", quality=58)
                     screenshot_paths["mass_surveillance"] = str(mass_path.relative_to(ROOT))
                     self.assertEqual(page.locator("surveillance-contrast .surveillance-person.is-flagged").count(), 3)
+
+                    abuse_buttons = page.locator("abuse-simulator [data-abuse]")
+                    for index, button in enumerate(abuse_buttons.all()):
+                        icon_box = button.locator("span").bounding_box()
+                        self.assert_inside(icon_box, button.bounding_box(), f"{profile_label}: abuse icon {index + 1}")
+                        self.assertGreaterEqual(icon_box["width"], 36, f"{profile_label}: abuse icon {index + 1} is too small")
+                    abuse_path = artifact_dir / "08b-abuse-tabs.jpg"
+                    page.locator("abuse-simulator .abuse-shell").screenshot(path=str(abuse_path), type="jpeg", quality=58, animations="disabled")
+                    screenshot_paths["abuse_tabs"] = str(abuse_path.relative_to(ROOT))
 
                     page.locator('[data-connection-filter="help"]').click()
                     connection_path = artifact_dir / "09-help-directory.jpg"
@@ -303,11 +387,19 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     active_vote = vote_picker.locator('[aria-selected="true"]')
                     self.assert_inside(active_vote.bounding_box(), vote_picker.bounding_box(), f"{profile_label}: active vote tab")
                     initial_member_count = page.locator("vote-explorer .member-grid article").count()
-                    expected_member_limit = 10 if viewport["width"] <= 600 else 48
-                    self.assertLessEqual(initial_member_count, expected_member_limit, profile_label)
+                    self.assertLessEqual(initial_member_count, 6, profile_label)
                     vote_path = artifact_dir / "10-vote-explorer.jpg"
                     page.locator("vote-explorer .vote-explorer-shell").screenshot(path=str(vote_path), type="jpeg", quality=58)
                     screenshot_paths["vote_explorer"] = str(vote_path.relative_to(ROOT))
+                    for card in page.locator("vote-explorer .member-grid article").all():
+                        label_box = card.locator(".member-position").bounding_box()
+                        name_box = card.locator("h5").bounding_box()
+                        self.assertTrue(card.locator("h5").inner_text().strip(), f"{profile_label}: empty member name")
+                        self.assertGreaterEqual(name_box["y"], label_box["y"] + label_box["height"] - 1, f"{profile_label}: vote label covers member name")
+
+                    chronology_path = artifact_dir / "09b-vote-chronology.jpg"
+                    page.locator("#szavazas .vote-chronology").screenshot(path=str(chronology_path), type="jpeg", quality=58, animations="disabled")
+                    screenshot_paths["vote_chronology"] = str(chronology_path.relative_to(ROOT))
 
                     safeguard_shell = page.locator("safeguard-builder .safeguard-shell")
                     safeguard_shell_box = safeguard_shell.bounding_box()
@@ -322,7 +414,7 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     readable_selector = ",".join((
                         ".mail-e2ee-no-key b", ".mail-e2ee-no-key span", ".mail-e2ee-key b",
                         ".mail-e2ee-key small", ".mail-key-comparison span", ".mail-key-comparison small",
-                        ".rate-results span", ".rate-derived small", ".rare-count > span", "footer p",
+                        ".rate-derived small", ".rare-count > span", "footer p",
                         ".surveillance-facts dd", ".surveillance-caveat", ".connection-grid p",
                     ))
                     readable_sizes = page.eval_on_selector_all(
@@ -332,7 +424,9 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     expected_readable_floor = 15 if viewport["width"] <= 820 else 14
                     self.assertGreaterEqual(min(readable_sizes), expected_readable_floor, profile_label)
                     diagram_sizes = page.eval_on_selector_all(
-                        ".crypto-packet b, .crypto-key-chip, .crypto-access-state",
+                        ".story-message, .story-track > b, .provider-window small, "
+                        ".provider-window strong, .provider-window em, .story-key, "
+                        ".story-no-key, .story-steps span, .story-legend",
                         "elements => elements.map(element => parseFloat(getComputedStyle(element).fontSize))",
                     )
                     expected_diagram_floor = 14 if viewport["width"] <= 820 else 13
@@ -357,6 +451,8 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                         f"{profile_label}: horizontal overflow {overflow}px from {overflow_sources}",
                     )
                     self.assertEqual(errors, [], f"{profile_label}: browser errors {errors}")
+                    for screenshot_key, relative_path in screenshot_paths.items():
+                        self.assert_not_black_frame(ROOT / relative_path, f"{profile_label}: {screenshot_key}")
                     self.artifact_manifest.append({
                         "profile_index": profile_index,
                         "name": name,
@@ -366,7 +462,7 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                             "horizontal_overflow_px": overflow,
                             "minimum_action_copy_to_button_gap_px": min(action_gaps),
                             "recipient_key_clearance_px": round(key_clearance, 2),
-                            "minimum_encryption_label_edge_margin_px": min(encryption_label_margins),
+                            "minimum_encryption_story_edge_margin_px": min(encryption_label_margins),
                             "minimum_readable_helper_font_px": min(readable_sizes),
                             "minimum_diagram_label_font_px": min(diagram_sizes),
                             "visible_help_directory_cards": visible_connection_cards,

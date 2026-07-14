@@ -57,21 +57,22 @@ const mailSteps = [
     before: false,
   },
   {
-    label: "Ellenőrzés útközben",
-    title: "A lezárt levél tartalmát útközben csak felnyitás után lehet átvizsgálni",
-    body: "Ha a szolgáltató szerverén akarják ellenőrizni a tartalmat, hozzáférés kell a tiszta szöveghez vagy képhez. Ezzel a zár eredeti biztonsági ígérete megváltozik.",
-    note: "A tartalomhoz hozzáférés szükséges.",
-    open: true,
-    lock: false,
+    label: "Felnyitás a közepén",
+    title: "A középen végzett ellenőrzéshez ott ki kell nyitni a levelet",
+    body: "A szolgáltató csak akkor tudja összevetni a tartalmat egy keresett mintával, ha olvashatóvá teszi. A levél tehát a szolgáltatónál már nem marad végig zárva: a papír előjön, az ellenőrzés megtörténik, majd a levél továbbmehet.",
+    note: "Magánüzenet: találkozunk 6-kor.",
+    open: false,
+    lock: true,
     scanner: true,
+    inspection: true,
     before: false,
   },
   {
-    label: "Ellenőrzés lezárás előtt",
-    title: "A készüléken végzett vizsgálat a lezárás előtti ellenőrzés",
-    body: "A készüléken végzett ellenőrzésnél az üzenetet még elküldés előtt vizsgálják át. Az adatátvitel ezután titkosított maradhat, de a tartalom a lezárás előtt már hozzáférhető volt a vizsgáló rendszer számára.",
-    note: "Ellenőrizve, aztán lezárva.",
-    open: true,
+    label: "Ellenőrzés indulás előtt",
+    title: "A másik lehetőség: még lezárás előtt nézik meg a papírt",
+    body: "A telefonon az üzenet még olvasható. Az ellenőrző rendszer ott nézi meg, és csak ezután kerül a lezárt borítékba. Útközben zárva maradhat, de a tartalmat a készüléken már átvizsgálták.",
+    note: "Magánüzenet: találkozunk 6-kor.",
+    open: false,
     lock: true,
     scanner: true,
     before: true,
@@ -98,18 +99,39 @@ class MailStory extends ReactiveElement {
           </div>
         </div>
         <div class="mail-stage">
-          <div class="mail-illustration" aria-hidden="true">
-            <div class="postman mail-postman mail-postman--step-${state.mailStep}">
+          <div class="mail-illustration mail-illustration--step-${state.mailStep}" aria-hidden="true">
+            <div class="postman mail-postman mail-postman--step-${state.mailStep} ${state.mailStep > 1 ? "is-hidden" : ""}">
               <span class="postman-head"></span><span class="postman-cap"></span><span class="postman-body"></span>
               <span class="postman-arm postman-arm--front"></span><span class="postman-arm postman-arm--back"></span>
               <span class="postman-leg postman-leg--front"></span><span class="postman-leg postman-leg--back"></span>
               <span class="postman-bag">✉</span>
             </div>
-            <div class="mail-object ${item.open ? "is-open" : ""} ${item.encrypted ? "is-e2ee" : ""} ${state.mailStep === 0 ? "is-postman-opened" : ""}">
+            ${item.inspection ? `
+              <div class="mail-inspection-booth">
+                <span>Szolgáltató</span>
+                <b>Ellenőrzési pont</b>
+                <i></i>
+              </div>
+              <div class="mail-phase-strip mail-phase-strip--inspection">
+                <span>1 · zárva érkezik</span><span>2 · felnyílik</span><span>3 · ellenőrzik</span>
+              </div>` : ""}
+            ${item.before ? `
+              <div class="mail-before-device">
+                <span class="mail-device-screen"><i></i></span>
+              </div>
+              <div class="mail-before-label"><b>A te készüléked</b><small>Itt még olvasható</small></div>
+              <div class="mail-phase-strip mail-phase-strip--before">
+                <span>1 · olvasható</span><span>2 · ellenőrzik</span><span>3 · lezárják</span>
+              </div>` : ""}
+            <div class="mail-object ${item.open ? "is-open" : ""} ${item.encrypted ? "is-e2ee" : ""} ${item.inspection ? "is-inspected" : ""} ${item.before ? "is-before-check" : ""} ${state.mailStep === 0 ? "is-postman-opened" : ""}">
               <div class="mail-note">
                 ${item.cipher ? `<span class="mail-note-cipher">${item.cipher}</span>` : ""}
                 <span class="mail-note-plain">${item.note}</span>
+                <i></i><i></i>
               </div>
+              <span class="mail-envelope-flap"></span>
+              <span class="mail-envelope-pocket"></span>
+              <span class="mail-envelope-heart">♥</span>
               ${state.mailStep === 0 ? '<span class="mail-opening-label">A postás elolvassa</span>' : ""}
               ${item.lock ? '<span class="mail-lock"></span>' : ""}
             </div>
@@ -124,8 +146,9 @@ class MailStory extends ReactiveElement {
                 <span><b>Kulcs a címzett egyik készülékén</b><small>Csak ilyen kulccsal áll helyre az üzenet</small></span>
               </div>
               <i class="mail-e2ee-key-traveller" aria-hidden="true"></i>` : ""}
-            ${item.scanner ? '<span class="mail-scanner"></span>' : ""}
-            ${item.before ? '<span class="before-seal">ÁTVILÁGÍTÁS<br>LEZÁRÁS ELŐTT</span>' : ""}
+            ${item.scanner ? '<span class="mail-scanner"><i></i></span>' : ""}
+            ${item.inspection ? '<span class="mail-access-label">A papír csak felnyitva vizsgálható</span>' : ""}
+            ${item.before ? '<span class="before-seal">Ellenőrzés után kerül a borítékba</span>' : ""}
           </div>
           <div class="mail-copy">
             <p class="mini-label">${item.label}</p>
@@ -163,58 +186,96 @@ class MailStory extends ReactiveElement {
 
 const encryptionModes = {
   https: {
-    tab: "Átvitel közben · biztonságos kapcsolat",
-    title: "A cső zárva van, de a szolgáltató végén kinyílik",
-    body: "A továbbítás közbeni biztonságos kapcsolat megakadályozza, hogy egy kávézó Wi-Fi-jén vagy az internetes útvonalon valaki egyszerűen beleolvasson az adatforgalomba. A küldő és a szolgáltató, majd a szolgáltató és a címzett között két külön kapcsolat van. A szolgáltató középen továbbra is olvashatja a tiszta tartalmat.",
-    termNote: "A HTTPS a webcímen is látható biztonságos kapcsolatra utal; ennek műszaki alapja rendszerint a TLS. A TLS két pont — például a telefonod és a szolgáltató szervere — között védi az úton lévő adatot. Nem jelenti azt, hogy a szolgáltató sem tudja elolvasni a tartalmat.",
-    keyOwner: "Az első kapcsolat kulcsait a küldő készüléke és a szolgáltató, a másodikét a szolgáltató és a címzett készüléke kezeli.",
-    provider: "Igen — a szerveren a szolgáltató hozzáférhet a tiszta tartalomhoz.",
-    protects: "Útközbeni lehallgatás ellen.",
-    limit: "Nem védi a tartalmat magától a szolgáltatótól vagy egy szerverfeltöréstől.",
-    packet: "Útközben zárva",
-    keyLabels: { sender: "1. kapcsolat", provider: "1. és 2. kapcsolat", recipient: "2. kapcsolat" },
-    providerCanRead: true,
-    storageCanRead: true,
+    tab: "1 · Két zárt útszakasz",
+    eyebrow: "Útközben védett",
+    title: "Kívülálló útközben nem tud beleolvasni — a szolgáltató viszont igen",
+    body: "A levél védetten jut el a szolgáltatóhoz, ott olvashatóvá válik, majd egy másik védett úton megy tovább. A kávézó Wi-Fi-jén leskelődő idegen nem tud egyszerűen beleolvasni, de a középen álló szolgáltató igen.",
+    scene: "conversation",
+    hub: "Szolgáltató",
+    providerReads: true,
+    providerView: "Találkozunk 6-kor?",
+    providerViewLabel: "Olvasható mondat",
+    senderPayload: "Találkozunk 6-kor?",
+    keyOwners: ["provider"],
+    routeLabel: "Úton zárva",
+    steps: [
+      "A telefonod lezárja az első útra.",
+      "A szolgáltatónál kinyílik és olvasható.",
+      "Újra lezárva jut el a címzetthez.",
+    ],
+    protects: "Az internetes útvonalon leskelődőktől.",
+    limit: "A szolgáltatótól, a szerverén dolgozóktól vagy egy szerverfeltöréstől nem.",
+    technicalTitle: "Műszaki név: HTTPS és TLS",
+    technical: "A HTTPS mögött rendszerint TLS védi az adatot két pont között. Ebben a példában két külön védett kapcsolat van: a küldő és a szolgáltató, majd a szolgáltató és a címzett között. Ez nem végpontok közötti titkosítás.",
   },
   providerRest: {
-    tab: "Tároláskor · szolgáltatói kulcs",
-    title: "A raktár zárva van, de a raktárosnál van a kulcs",
-    body: "A lemez vagy adatbázis titkosítása védi az ellopott merevlemezt és bizonyos üzemeltetési hibákat. Ha a kulcsot ugyanaz a szolgáltató kezeli, a saját rendszerében továbbra is feloldhatja a tárolt tartalmat.",
-    keyOwner: "A tárolási kulcs a szolgáltató kulcskezelő rendszerében van.",
-    provider: "Igen — a szolgáltató a saját kulcsával feloldhatja.",
-    protects: "Az adathordozó ellopása és egyes, az infrastruktúrát érő támadások ellen.",
-    limit: "Nem jelent szolgáltató előli tartalmi titkosságot.",
-    packet: "A raktárban zárva",
-    keyLabels: { provider: "Tárolási kulcs" },
-    providerCanRead: true,
-    storageCanRead: false,
+    tab: "2 · A raktáros kulcsa",
+    eyebrow: "Tároláskor védett",
+    title: "A doboz zárva van, de a raktáros ki tudja nyitni",
+    body: "A szolgáltató lezárva tárolja a fájlt, de a nyitásához szükséges kulcsot is ő kezeli. Egy ellopott merevlemezről nehezebb megszerezni a tartalmat, a szolgáltató saját rendszerében viszont továbbra is elolvashatja.",
+    scene: "storage",
+    hub: "Felhőtárhely",
+    providerReads: true,
+    providerView: "Családi fotók.zip",
+    providerViewLabel: "Megnyitható fájl",
+    senderPayload: "Családi fotók.zip",
+    keyOwners: ["provider"],
+    routeLabel: "Lezárt fájl",
+    steps: [
+      "A fájl lezárva kerül a tárhelyre.",
+      "A szolgáltató őrzi a fájlt és a kulcsot is.",
+      "Ha szüksége van rá, fel tudja nyitni.",
+    ],
+    protects: "Például egy ellopott adathordozó közvetlen kiolvasásától.",
+    limit: "A szolgáltató saját hozzáférésétől nem.",
+    technicalTitle: "Műszaki név: titkosítás tároláskor, szolgáltatói kulccsal",
+    technical: "A lemez vagy az adatbázis titkosítva van, de a feloldó kulcs a szolgáltató kulcskezelő rendszerében marad. Ez hasznos védelem, de nem jelent titkosságot magával a szolgáltatóval szemben.",
   },
   userRest: {
-    tab: "Tároláskor · felhasználói kulcs",
-    title: "A raktár őrzi a dobozt, de nincs nála a kulcs",
-    scope: "Ez a példa felhőben tárolt fájlról szól; önmagában nem tesz egy üzenetküldést végpontok között titkosítottá.",
-    body: "Olyan tárolásnál, amelynél a szolgáltató nem ismeri a fájl feloldásához szükséges kulcsot, a fájlt te zárod le még a feltöltés előtt. A tárhely csak a lezárt fájlt kapja meg; más csak akkor tudja megnyitni, ha külön megkapja tőled a kulcsot.",
-    keyOwner: "A fájl feloldásához szükséges kulcs a felhasználó készülékén van, vagy egy általa őrzött helyreállítási kulccsal érhető el.",
-    provider: "Nem — ha a megvalósítás valóban nem küldi el neki a kulcsot.",
-    protects: "A tárolóhoz vagy a szolgáltató rendszeréhez való illetéktelen hozzáféréstől is.",
-    limit: "A végpont feltörése, a gyenge jelszó és a metaadatok ettől még kockázatot jelenthetnek.",
-    packet: "Lezárt fájl",
-    keyLabels: { sender: "Fájlkulcs" },
-    providerCanRead: false,
-    storageCanRead: false,
+    tab: "3 · A kulcs nálad marad",
+    eyebrow: "Te zárod le feltöltés előtt",
+    title: "A raktár csak a lezárt dobozt őrzi",
+    body: "A fájlt még a saját készülékeden zárod le, és a kulcsot nem adod át a tárhelynek. A szolgáltató tárolni tudja a lezárt fájlt, de a tartalma helyett csak értelmetlen karaktereket lát.",
+    scene: "storage",
+    hub: "Felhőtárhely",
+    providerReads: false,
+    providerView: "7F A9 · C2 10 · 4D 8B",
+    providerViewLabel: "Csak zagyvaság",
+    senderPayload: "Családi fotók.zip",
+    keyOwners: ["sender"],
+    routeLabel: "Lezárt fájl",
+    steps: [
+      "Te zárod le a fájlt még feltöltés előtt.",
+      "A kulcs a készülékeden marad.",
+      "A tárhely csak az olvashatatlan fájlt őrzi.",
+    ],
+    protects: "A tárhelyhez vagy a szolgáltató rendszeréhez hozzáférőktől is.",
+    limit: "A feltört készüléket, a rosszul őrzött kulcsot és a látható metaadatokat nem oldja meg.",
+    technicalTitle: "Műszaki név: felhasználói kulccsal végzett tárolási titkosítás",
+    technical: "Ezt gyakran kliensoldali titkosításnak nevezik: a fájl a feltöltés előtt válik olvashatatlanná. Ez a példa felhőben tárolt fájlról szól; önmagában nem tesz egy üzenetküldést végpontok között titkosítottá.",
   },
   e2ee: {
-    tab: "Végponttól végpontig · E2EE",
-    title: "A küldő zárja le, és csak a címzett nyitja ki",
-    body: "Végpontok közötti titkosításnál az üzenet a küldő készülékén válik olvashatatlanná, és a címzett készülékén válik újra olvashatóvá. A közvetítő szolgáltató továbbítja és tárolhatja a titkosított adatot, de nem kap a tartalom feloldásához szükséges kulcsot.",
-    keyOwner: "A tartalomkulcsok a beszélgetés résztvevőinek végpontjain vannak.",
-    provider: "Nem — a helyesen megvalósított rendszerben nincs nála a tartalom feloldásához szükséges kulcs.",
-    protects: "Útközben és a szolgáltató által kezelt titkosított másolatban is védi az üzenet tartalmát.",
-    limit: "A résztvevők készülékén vagy biztonsági mentésében tárolt példány védelme külön beállításoktól függ; a képernyőmentéseket és a kommunikáció metaadatait sem teszi láthatatlanná.",
-    packet: "Végig zárva",
-    keyLabels: { sender: "Tartalomkulcs", recipient: "Tartalomkulcs" },
-    providerCanRead: false,
-    storageCanRead: false,
+    tab: "4 · Lezárva a címzettig",
+    eyebrow: "Csak a beszélgetés két végén nyílik ki",
+    title: "A levelet csak te és a címzett tudjátok elolvasni",
+    body: "A telefonod lezárja az üzenetet, mielőtt az elindul. A szolgáltató végig a lezárt változatot továbbítja és tárolhatja. Az eredeti mondat csak a címzett készülékén válik újra olvashatóvá.",
+    scene: "conversation",
+    hub: "Szolgáltató",
+    providerReads: false,
+    providerView: "7F A9 · C2 10 · 4D 8B",
+    providerViewLabel: "Csak zagyvaság",
+    senderPayload: "Találkozunk 6-kor?",
+    keyOwners: ["sender", "recipient"],
+    routeLabel: "Végig lezárva",
+    steps: [
+      "A telefonod még indulás előtt lezárja.",
+      "A szolgáltatónál sem nyílik ki.",
+      "Csak a címzett készüléke nyitja ki.",
+    ],
+    protects: "Útközben és a szolgáltatónál is védi az üzenet tartalmát.",
+    limit: "A feltört telefont, a képernyőmentést, a nem védett biztonsági mentést és minden metaadatot nem tesz láthatatlanná.",
+    technicalTitle: "Műszaki név: végpontok közötti titkosítás (E2EE)",
+    technical: "Az E2EE az angol end-to-end encryption rövidítése. Helyes megvalósításnál a tartalom feloldásához szükséges kulcs nincs a szolgáltatónál; a beszélgetés résztvevőinek készülékein van.",
   },
 };
 
@@ -226,55 +287,80 @@ class EncryptionLayers extends HTMLElement {
 
   render() {
     const item = encryptionModes[this.active];
+    const isStorage = item.scene === "storage";
+    const ownsKey = (owner) => item.keyOwners.includes(owner);
+    const keyBadge = (owner, label) => ownsKey(owner)
+      ? `<span class="story-key is-owned"><i aria-hidden="true"></i>${label}</span>`
+      : "";
     this.innerHTML = `
       <section class="encryption-shell" aria-labelledby="encryption-title">
         <div class="encryption-heading">
           <p class="chapter-number">Négy titkosítási helyzet · nem ugyanott és nem ugyanattól védenek</p>
-          <h3 id="encryption-title">Ki tudja kinyitni, és hol?</h3>
-          <p>A „titkosított” szó önmagában nem mondja meg, ki olvashatja az adatot. Nézd meg külön az átvitel, a tárolás és a végpontok közötti titkosítás esetét.</p>
+          <h3 id="encryption-title">Kövesd a levelet: hol nyílik ki?</h3>
+          <p>A sárga kulcs azt mutatja, kinél válhat olvashatóvá a tartalom. A felhőtárhely vagy szolgáltató épületében lévő külön betekintőképernyő azt mutatja, mi jelenik meg a saját rendszerében: az eredeti tartalom vagy csak olvashatatlan zagyvaság.</p>
         </div>
         <div class="encryption-tabs" role="tablist" aria-label="Titkosítási megoldások">
-          ${Object.entries(encryptionModes).map(([key, mode]) => `<button type="button" role="tab" data-encryption="${key}" aria-selected="${key === this.active}" tabindex="${key === this.active ? 0 : -1}">${mode.tab}</button>`).join("")}
+          ${Object.entries(encryptionModes).map(([key, mode]) => `<button id="encryption-tab-${key}" type="button" role="tab" data-encryption="${key}" aria-controls="encryption-panel" aria-selected="${key === this.active}" tabindex="${key === this.active ? 0 : -1}">${mode.tab}</button>`).join("")}
         </div>
-        <div class="encryption-panel mode-${this.active}" role="tabpanel" tabindex="0">
-          <div class="crypto-diagram" aria-hidden="true">
-            <div class="crypto-flow">
-              <div class="crypto-node crypto-sender">
-                <span class="crypto-device"><i></i></span><b>Te</b>
-                <em class="crypto-key-chip ${item.keyLabels?.sender ? "has-key" : "no-key"}"><i></i>${item.keyLabels?.sender || "Nincs kulcs"}</em>
+        <div id="encryption-panel" class="encryption-panel mode-${this.active}" role="tabpanel" aria-labelledby="encryption-tab-${this.active}" tabindex="0">
+          <div class="lock-story" aria-label="${item.title}">
+            <div class="lock-story-stage ${isStorage ? "is-storage" : "is-conversation"}">
+              <article class="story-actor story-sender">
+                <span class="story-avatar story-avatar--person" aria-hidden="true"><i></i><i></i></span>
+                <b>Te</b>
+                <span class="story-message">${item.senderPayload}</span>
+                ${keyBadge("sender", "A kulcs nálad")}
+              </article>
+              <div class="story-track story-track--first" aria-hidden="true">
+                <i class="story-track-line"></i>
+                <span class="journey-mail"><i></i></span>
+                <b>${item.routeLabel}</b>
               </div>
-              <div class="crypto-route"><span class="crypto-packet"><i></i><b>${item.packet}</b></span><i></i></div>
-              <div class="crypto-middle">
-                <div class="crypto-node crypto-service">
-                  <span class="crypto-server"><i></i><i></i><i></i></span><b>Szolgáltató</b>
-                  <em class="crypto-key-chip ${item.keyLabels?.provider ? "has-key" : "no-key"}"><i></i>${item.keyLabels?.provider || "Nincs kulcs"}</em>
-                  <strong class="crypto-access-state ${item.providerCanRead ? "is-readable" : "is-sealed"}">${item.providerCanRead ? "olvasható" : "zárva"}</strong>
+              <article class="story-actor story-hub ${item.providerReads ? "can-read" : "cannot-read"}">
+                <span class="story-avatar story-avatar--building" aria-hidden="true"><i></i><i></i><i></i></span>
+                <b>${item.hub}</b>
+                <div class="provider-window ${item.providerReads ? "is-readable" : "is-scrambled"}">
+                  <small>A szolgáltató saját rendszerében</small>
+                  <strong>${item.providerView}</strong>
+                  <em>${item.providerViewLabel}</em>
                 </div>
-                <div class="crypto-node crypto-storage">
-                  <span class="crypto-database"><i></i><i></i></span><b>Tárolás</b>
-                  <strong class="crypto-access-state ${item.storageCanRead ? "is-readable" : "is-sealed"}">${item.storageCanRead ? "olvasható" : "zárva"}</strong>
+                ${keyBadge("provider", "Nála van a kulcs") || `<span class="story-no-key"><i aria-hidden="true"></i>Nála nincs kulcs</span>`}
+              </article>
+              ${isStorage ? "" : `
+                <div class="story-track story-track--second" aria-hidden="true">
+                  <i class="story-track-line"></i>
+                  <span class="journey-mail"><i></i></span>
+                  <b>${item.routeLabel}</b>
                 </div>
-              </div>
-              <div class="crypto-route crypto-route--second"><span class="crypto-packet"><i></i><b>${item.packet}</b></span><i></i></div>
-              <div class="crypto-node crypto-recipient">
-                <span class="crypto-device"><i></i></span><b>Címzett</b>
-                <em class="crypto-key-chip ${item.keyLabels?.recipient ? "has-key" : "no-key"}"><i></i>${item.keyLabels?.recipient || "Nincs kulcs"}</em>
-              </div>
+                <article class="story-actor story-recipient">
+                  <span class="story-avatar story-avatar--person" aria-hidden="true"><i></i><i></i></span>
+                  <b>Címzett</b>
+                  <span class="story-message recipient-message">Találkozunk 6-kor?</span>
+                  ${keyBadge("recipient", "A kulcs a címzettnél")}
+                </article>`}
             </div>
-            <p class="crypto-diagram-note"><span class="is-key"></span>A kulcs birtokosa fel tudja oldani a tartalmat. <span class="is-sealed"></span>A zárt állapot önmagában nem mondja meg, kinél van a kulcs.</p>
+            <div class="story-steps" aria-label="A történet három lépése">
+              ${item.steps.map((step, index) => `<div><b>${index + 1}</b><span>${step}</span></div>`).join("")}
+            </div>
+            <p class="story-legend"><span class="legend-key"><i aria-hidden="true"></i></span><b>Sárga kulcs:</b> itt olvashatóvá tehető. <span class="legend-service-screen" aria-hidden="true"><i></i></span><b>Szolgáltatói betekintőképernyő:</b> ezt látja a közvetítő vagy a tárhely a saját rendszerében.</p>
           </div>
           <div class="encryption-copy">
-            <p class="mini-label">${item.tab}</p>
+            <p class="mini-label">${item.eyebrow}</p>
             <h4>${item.title}</h4>
-            ${item.scope ? `<p class="crypto-scope">${item.scope}</p>` : ""}
             <p>${item.body}</p>
-            ${item.termNote ? `<details class="crypto-term-note"><summary>Mit jelent a HTTPS és a TLS?</summary><p>${item.termNote}</p></details>` : ""}
-            <dl>
-              <div><dt>Kinél van a kulcs?</dt><dd>${item.keyOwner}</dd></div>
-              <div><dt>Olvashatja a szolgáltató?</dt><dd>${item.provider}</dd></div>
-              <div><dt>Mitől véd?</dt><dd>${item.protects}</dd></div>
-              <div><dt>Mit nem old meg?</dt><dd>${item.limit}</dd></div>
-            </dl>
+            <div class="service-answer ${item.providerReads ? "is-yes" : "is-no"}">
+              <span>El tudja olvasni a szolgáltató?</span>
+              <strong>${item.providerReads ? "IGEN" : "NEM"}</strong>
+              <small>${item.providerReads ? "Az olvasható tartalom nála is megjelenik." : "Nála csak a lezárt, értelmetlen változat jelenik meg."}</small>
+            </div>
+            <div class="plain-facts">
+              <article><b>Mire jó?</b><p>${item.protects}</p></article>
+              <article><b>Mi marad kockázat?</b><p>${item.limit}</p></article>
+            </div>
+            <details class="technical-name">
+              <summary>${item.technicalTitle}</summary>
+              <p>${item.technical}</p>
+            </details>
           </div>
         </div>
       </section>`;
@@ -416,7 +502,18 @@ class DetectionLab extends ReactiveElement {
     this.falseRate = this.falseRate ?? 0.5;
     this.sensitivity = this.sensitivity ?? 90;
     this.prevalence = this.prevalence ?? 0.1;
+    this.messageTotal = this.messageTotal ?? 10000;
     super.connectedCallback();
+    this.handleResize ||= () => {
+      cancelAnimationFrame(this.resizeFrame);
+      this.resizeFrame = requestAnimationFrame(() => this.updateMetrics());
+    };
+    window.addEventListener("resize", this.handleResize);
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener("resize", this.handleResize);
+    cancelAnimationFrame(this.resizeFrame);
   }
 
   render() {
@@ -442,9 +539,16 @@ class DetectionLab extends ReactiveElement {
         <section class="base-rate" aria-labelledby="base-rate-title">
           <div class="base-rate__head">
             <div><p class="mini-label">Szemléltető példa az alaparányra</p><h3 id="base-rate-title">A ritka találat matematikája</h3></div>
-            <p><b>Feltételezés:</b> 10 000 üzenet vizsgálati eredményét látod. Te állítod be, valójában hány tiltott üzenet van közöttük, ezekből mennyit talál meg a rendszer, és hány ártatlan üzenetet jelöl tévesen. Ezek szemléltető értékek, nem egy tervezett uniós rendszer mért teljesítménye.</p>
+            <p><b>Feltételezés:</b> te állítod be, hány üzenet vizsgálati eredményét látod, valójában mennyi tiltott üzenet van közöttük, ezekből mennyit talál meg a rendszer, és hány ártatlan üzenetet jelöl tévesen. Ezek szemléltető értékek, nem egy tervezett uniós rendszer mért teljesítménye.</p>
           </div>
-          <p class="rate-explainer"><b>Három külön számról van szó.</b> Az alaparány azt mondja meg, mennyi a valóban tiltott üzenet. Az érzékenység ezek közül talál meg valamennyit. A tévespozitív-arány pedig csak az ártatlan üzenetekre vonatkozik. Mindhárom csúszka 0–100% között állítható.</p>
+          <div class="base-rate__sample-size">
+            <label for="messageTotal"><span>Összes vizsgált üzenet</span><small>1 és 100 millió között</small></label>
+            <div class="sample-size-input"><input id="messageTotal" type="number" min="1" max="100000000" step="1" inputmode="numeric" value="${this.messageTotal}" aria-describedby="rateNote" /><span>üzenet</span></div>
+            <div class="rate-presets" aria-label="Példaértékek az összes üzenet számához">
+              ${[1000, 10000, 100000, 1000000].map((count) => `<button type="button" data-total="${count}">${count.toLocaleString("hu-HU")}</button>`).join("")}
+            </div>
+          </div>
+          <p class="rate-explainer"><b>Négy külön számról van szó.</b> A teljes üzenetszám adja a példa méretét. Az alaparány azt mondja meg, mennyi a valóban tiltott üzenet. Az érzékenység ezek közül talál meg valamennyit. A tévespozitív-arány pedig csak az ártatlan üzenetekre vonatkozik. A három arány 0–100% között állítható.</p>
           <div class="base-rate__control-grid">
             <div class="base-rate__controls">
               <label for="prevalence"><span>Valódi alaparány: az üzenetek hány százaléka ténylegesen tiltott?</span><output data-prevalence-output>${this.formatRate(this.prevalence)}%</output></label>
@@ -469,24 +573,26 @@ class DetectionLab extends ReactiveElement {
             </div>
           </div>
           <div class="rate-visuals">
-            <figure><canvas class="population-canvas" width="500" height="500" aria-label="Tízezer üzenet kimeneteinek pontábrája"></canvas><figcaption>10 000 üzenet · egy pont egy üzenet</figcaption></figure>
+            <figure class="population-figure">
+              <canvas class="population-canvas" width="500" height="500" aria-label="Az üzenetek kimeneteinek pontábrája"></canvas>
+              <div class="population-composition" data-population-composition hidden>
+                <div class="composition-total"><span>Összes vizsgált üzenet</span><strong data-composition-total></strong></div>
+                <div class="composition-bar" data-composition-bar aria-label="A négy kimenet pontos aránya"></div>
+                <div class="composition-grid" data-composition-grid></div>
+              </div>
+              <figcaption data-population-caption></figcaption>
+            </figure>
             <figure><canvas class="alert-canvas" width="500" height="250" aria-label="A riasztások kinagyított pontábrája"></canvas><figcaption data-alert-caption>A riasztások kinagyítva · egy pont egy riasztás</figcaption></figure>
           </div>
           <section class="rate-magnifier" aria-labelledby="rate-magnifier-title">
-            <div><p class="mini-label">Láthatósági nagyítás</p><h4 id="rate-magnifier-title">A kevés találat se vesszen el a tízezer pont között</h4></div>
+            <div><p class="mini-label">Láthatósági nagyítás</p><h4 id="rate-magnifier-title">A kevés találat se vesszen el a sok üzenet között</h4></div>
             <p>Legfeljebb 20 nagy jelölést rajzolunk ki kategóriánként. A mellettük álló szám a teljes darabszámot mutatja, egészre kerekítve.</p>
             <div class="rare-count-grid" data-rare-counts></div>
           </section>
-          <div class="rate-results" aria-live="polite">
-            <div class="true-result"><b data-tp>9</b><span>valódi találat</span></div>
-            <div class="missed-result"><b data-fn>1</b><span>elszalasztott tiltott tartalom</span></div>
-            <div class="false-result"><b data-fp>50</b><span>téves riasztás</span></div>
-            <div class="true-negative-result"><b data-tn>9 940</b><span>helyesen békén hagyott üzenet</span></div>
-          </div>
           <p class="rate-rounding">A darabszámok várható értékek, egész darabra kerekítve.</p>
           <p class="rate-example" data-rate-example></p>
           <div class="rate-derived" aria-live="polite">
-            <div><span>Ártatlan üzenetek helyes elengedése</span><b data-specificity>99,5%</b><small>Szakmai nevén specificitás; ha van ártatlan üzenet, 100% mínusz a tévespozitív-arány</small></div>
+            <div><span>Ártatlan üzenetek helyes elengedése</span><b data-specificity>99,5%</b><small>Szakmai nevén specificitás; a helyesen elengedett ártatlan üzenetek aránya a fent látható, egészre kerekített darabszámok alapján</small></div>
             <div><span>A riasztások megbízhatósága</span><b data-ppv>15,3%</b><small>Szakmai nevén pozitív prediktív érték: a valódi találatok aránya az összes riasztás között</small></div>
           </div>
           <p class="rate-summary" id="rateNote" data-rate-summary></p>
@@ -511,6 +617,7 @@ class DetectionLab extends ReactiveElement {
     const slider = this.querySelector("#falseRate");
     const sensitivitySlider = this.querySelector("#sensitivity");
     const prevalenceSlider = this.querySelector("#prevalence");
+    const totalInput = this.querySelector("#messageTotal");
     slider.addEventListener("input", () => {
       this.falseRate = Number(slider.value);
       this.updateMetrics();
@@ -522,6 +629,17 @@ class DetectionLab extends ReactiveElement {
     prevalenceSlider.addEventListener("input", () => {
       this.prevalence = Number(prevalenceSlider.value);
       this.updateMetrics();
+    });
+    const updateTotal = () => {
+      if (!Number.isFinite(totalInput.valueAsNumber)) return;
+      this.messageTotal = Math.min(100000000, Math.max(1, Math.round(totalInput.valueAsNumber)));
+      totalInput.value = String(this.messageTotal);
+      this.updateMetrics();
+    };
+    totalInput.addEventListener("input", updateTotal);
+    totalInput.addEventListener("change", () => {
+      updateTotal();
+      totalInput.value = String(this.messageTotal);
     });
     this.querySelectorAll("[data-rate]").forEach((button) => button.addEventListener("click", () => {
       this.falseRate = Number(button.dataset.rate);
@@ -538,6 +656,11 @@ class DetectionLab extends ReactiveElement {
       prevalenceSlider.value = String(this.prevalence);
       this.updateMetrics();
     }));
+    this.querySelectorAll("[data-total]").forEach((button) => button.addEventListener("click", () => {
+      this.messageTotal = Number(button.dataset.total);
+      totalInput.value = String(this.messageTotal);
+      this.updateMetrics();
+    }));
     this.updateMetrics();
   }
 
@@ -546,7 +669,7 @@ class DetectionLab extends ReactiveElement {
   }
 
   updateMetrics() {
-    const total = 10000;
+    const total = this.messageTotal;
     const positives = Math.round(total * (this.prevalence / 100));
     const innocent = total - positives;
     const tp = Math.round(positives * (this.sensitivity / 100));
@@ -556,15 +679,12 @@ class DetectionLab extends ReactiveElement {
     const flagged = tp + fp;
     const falseShare = flagged ? (fp / flagged) * 100 : null;
     const positivePredictiveValue = flagged ? (tp / flagged) * 100 : null;
-    const specificity = innocent ? 100 - this.falseRate : null;
+    const specificity = innocent ? (tn / innocent) * 100 : null;
     const numberLocale = document.documentElement.lang || "hu";
     this.querySelector("[data-prevalence-output]").textContent = `${this.formatRate(this.prevalence)}%`;
     this.querySelector("[data-sensitivity-output]").textContent = `${this.sensitivity}%`;
     this.querySelector("[data-rate-output]").textContent = `${this.formatRate(this.falseRate)}%`;
-    this.querySelector("[data-tp]").textContent = tp.toLocaleString(numberLocale);
-    this.querySelector("[data-fn]").textContent = fn.toLocaleString(numberLocale);
-    this.querySelector("[data-fp]").textContent = fp.toLocaleString(numberLocale);
-    this.querySelector("[data-tn]").textContent = tn.toLocaleString(numberLocale);
+    this.querySelectorAll("[data-total]").forEach((button) => button.classList.toggle("is-active", Number(button.dataset.total) === total));
     this.querySelector("[data-specificity]").textContent = specificity === null
       ? "Nem értelmezhető"
       : `${specificity.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
@@ -583,67 +703,146 @@ class DetectionLab extends ReactiveElement {
     this.querySelectorAll("[data-rate]").forEach((button) => button.classList.toggle("is-active", Number(button.dataset.rate) === this.falseRate));
     this.querySelectorAll("[data-sensitivity]").forEach((button) => button.classList.toggle("is-active", Number(button.dataset.sensitivity) === this.sensitivity));
     this.querySelectorAll("[data-prevalence]").forEach((button) => button.classList.toggle("is-active", Number(button.dataset.prevalence) === this.prevalence));
-    this.drawPopulation(tp, fn, fp, positives);
+    this.drawPopulation({ tp, fn, fp, tn, total });
     this.drawAlerts(tp, fp);
     this.drawRareCounts({ tp, fn, fp, tn });
   }
 
-  drawPopulation(tp, fn, fp, positives) {
+  drawPopulation({ tp, fn, fp, tn, total }) {
     const canvas = this.querySelector(".population-canvas");
-    const ctx = canvas.getContext("2d");
-    const size = 5;
+    const composition = this.querySelector("[data-population-composition]");
+    const numberLocale = document.documentElement.lang || "hu";
+    const dotDisplayLimit = 10000;
+    if (total > dotDisplayLimit) {
+      canvas.hidden = true;
+      composition.hidden = false;
+      this.drawPopulationComposition({ tp, fn, fp, tn, total });
+      const caption = `${total.toLocaleString(numberLocale)} üzenet · pontos darabszámok és arányok, pontfelhő helyett`;
+      this.querySelector("[data-population-caption]").textContent = caption;
+      canvas.setAttribute("aria-label", caption);
+      return;
+    }
+    canvas.hidden = false;
+    composition.hidden = true;
+    const { ctx, width, height } = this.prepareCanvas(canvas, 1);
     const colors = { tn: "#657878", fp: "#ff7764", tp: "#62d1bc", fn: "#efb54a" };
     ctx.fillStyle = "#243c3d";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for (let slot = 0; slot < 10000; slot += 1) this.drawCell(ctx, slot, size, colors.tn);
-    const positiveSlots = Array.from({ length: positives }, (_, index) => Math.floor((index * 10000) / Math.max(1, positives)));
-    const positiveSet = new Set(positiveSlots);
-    positiveSlots.forEach((slot, index) => {
-      const category = index < tp ? "tp" : "fn";
-      const categoryCount = category === "tp" ? tp : fn;
-      this.drawCell(ctx, slot, size, colors[category], categoryCount > 0 && categoryCount <= 20);
+    ctx.fillRect(0, 0, width, height);
+    const columns = Math.ceil(Math.sqrt(total));
+    const rows = Math.ceil(total / columns);
+    const cellWidth = width / columns;
+    const cellHeight = height / rows;
+    const slots = Array.from({ length: total }, (_, index) => index);
+    let seed = 0x5f3759df;
+    for (let index = slots.length - 1; index > 0; index -= 1) {
+      seed = (1664525 * seed + 1013904223) >>> 0;
+      const swap = seed % (index + 1);
+      [slots[index], slots[swap]] = [slots[swap], slots[index]];
+    }
+    let cursor = 0;
+    ["tn", "fp", "fn", "tp"].forEach((category) => {
+      const count = { tp, fn, fp, tn }[category];
+      for (let index = 0; index < count; index += 1) {
+        this.drawCell(ctx, slots[cursor], columns, cellWidth, cellHeight, colors[category], countsForHighlight(category));
+        cursor += 1;
+      }
     });
-    let painted = 0;
-    let cursor = 137;
-    while (painted < fp) {
-      const slot = cursor % 10000;
-      cursor += 7919;
-      if (positiveSet.has(slot)) continue;
-      this.drawCell(ctx, slot, size, colors.fp, fp > 0 && fp <= 20);
-      painted += 1;
+    const caption = `${total.toLocaleString(numberLocale)} üzenet · egy éles pont egy üzenet`;
+    this.querySelector("[data-population-caption]").textContent = caption;
+    canvas.setAttribute("aria-label", caption);
+
+    function countsForHighlight(category) {
+      const actual = { tp, fn, fp, tn }[category];
+      return actual > 0 && actual <= 20;
     }
   }
 
-  drawCell(ctx, slot, size, color, highlight = false) {
-    const x = (slot % 100) * size;
-    const y = Math.floor(slot / 100) * size;
+  drawPopulationComposition({ tp, fn, fp, tn, total }) {
+    const numberLocale = document.documentElement.lang || "hu";
+    const categories = [
+      ["tp", "Valódi találat", tp],
+      ["fn", "Elszalasztott tiltott tartalom", fn],
+      ["fp", "Téves riasztás", fp],
+      ["tn", "Helyesen békén hagyott", tn],
+    ];
+    this.querySelector("[data-composition-total]").textContent = total.toLocaleString(numberLocale);
+    const percent = (count) => (count / total) * 100;
+    const formatPercent = (count) => {
+      const value = percent(count);
+      if (count === 0) return "0%";
+      if (value < .001) return "<0,001%";
+      return `${value.toLocaleString(numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 3 })}%`;
+    };
+    this.querySelector("[data-composition-bar]").innerHTML = categories
+      .map(([key, label, count]) => `<i class="composition-segment composition-segment--${key}" style="width:${percent(count)}%" title="${label}: ${count.toLocaleString(numberLocale)}"></i>`)
+      .join("");
+    this.querySelector("[data-composition-grid]").innerHTML = categories
+      .map(([key, label, count]) => `<article class="composition-card composition-card--${key}">
+        <span>${label}</span><strong>${count.toLocaleString(numberLocale)}</strong>
+        <b>${formatPercent(count)}</b>
+      </article>`)
+      .join("");
+  }
+
+  prepareCanvas(canvas, aspectRatio) {
+    const cssWidth = Math.max(280, canvas.getBoundingClientRect().width || 500);
+    const cssHeight = cssWidth / aspectRatio;
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(cssWidth * pixelRatio);
+    canvas.height = Math.round(cssHeight * pixelRatio);
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    return { ctx, width: cssWidth, height: cssHeight };
+  }
+
+  drawCell(ctx, slot, columns, cellWidth, cellHeight, color, highlight = false) {
+    const x = (slot % columns) * cellWidth + cellWidth / 2;
+    const y = Math.floor(slot / columns) * cellHeight + cellHeight / 2;
+    const radius = Math.max(1.4, Math.min(12, Math.min(cellWidth, cellHeight) * 0.36));
     ctx.fillStyle = color;
-    ctx.fillRect(x + 0.6, y + 0.6, size - 1.2, size - 1.2);
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
     if (!highlight) return;
     ctx.strokeStyle = "#fffdf8";
     ctx.lineWidth = 1.4;
-    ctx.strokeRect(x + 0.7, y + 0.7, size - 1.4, size - 1.4);
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(1, radius - 0.7), 0, Math.PI * 2);
+    ctx.stroke();
   }
 
   drawAlerts(tp, fp) {
     const canvas = this.querySelector(".alert-canvas");
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const { ctx, width, height } = this.prepareCanvas(canvas, 2);
+    ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = "#243c3d";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, width, height);
     const total = tp + fp;
     const shown = Math.min(total, 1000);
     const shownTrue = total ? Math.round(shown * (tp / total)) : 0;
-    const columns = 50;
-    const size = 9;
-    for (let i = 0; i < shown; i += 1) {
-      ctx.fillStyle = i < shownTrue ? "#62d1bc" : "#ff7764";
-      const x = 18 + (i % columns) * size;
-      const y = 18 + Math.floor(i / columns) * size;
+    const columns = Math.max(1, Math.ceil(Math.sqrt(shown * 2)));
+    const rows = Math.max(1, Math.ceil(shown / columns));
+    const cellWidth = width / columns;
+    const cellHeight = height / rows;
+    const radius = Math.max(2.2, Math.min(18, Math.min(cellWidth, cellHeight) * .28));
+    const categories = [
+      ...Array.from({ length: shownTrue }, () => "tp"),
+      ...Array.from({ length: shown - shownTrue }, () => "fp"),
+    ];
+    categories.forEach((category, index) => {
+      const shuffled = (index * 7919) % Math.max(1, shown);
+      ctx.fillStyle = category === "tp" ? "#62d1bc" : "#ff7764";
+      const x = (shuffled % columns) * cellWidth + cellWidth / 2;
+      const y = Math.floor(shuffled / columns) * cellHeight + cellHeight / 2;
       ctx.beginPath();
-      ctx.arc(x, y, Math.max(1.5, size * 0.34), 0, Math.PI * 2);
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
-    }
+      if (shown <= 20) {
+        ctx.strokeStyle = "#fffdf8";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    });
     const caption = total === 0
       ? "Nincs riasztás a beállított példában"
       : total > 1000
@@ -670,7 +869,7 @@ class DetectionLab extends ReactiveElement {
       const more = count > shown ? '<i class="rare-more">+</i>' : "";
       return `<article class="rare-count rare-count--${key}" aria-label="${label}: ${count.toLocaleString(numberLocale)}">
         <div class="rare-dots" aria-hidden="true">${dots}${more}</div>
-        <b>${count.toLocaleString(numberLocale)}</b><span>${label}</span>
+        <b data-${key}>${count.toLocaleString(numberLocale)}</b><span>${label}</span>
       </article>`;
     }).join("");
   }
@@ -1134,7 +1333,7 @@ class AbuseHistory extends HTMLElement {
 
 class VoteExplorer extends HTMLElement {
   pageSize() {
-    return window.matchMedia("(max-width: 600px)").matches ? 10 : 48;
+    return window.matchMedia("(max-width: 820px)").matches || navigator.maxTouchPoints > 0 ? 6 : 48;
   }
 
   connectedCallback() {

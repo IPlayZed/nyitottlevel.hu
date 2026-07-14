@@ -19,13 +19,13 @@ TARGETS = {
     "mobile": {
         "module": "tests.test_mobile_profiles",
         "artifact_dir": ROOT / "test-artifacts" / "mobile",
-        "default_workers": 4,
+        "default_workers": 8,
         "maximum_shards": 60,
     },
     "desktop": {
         "module": "tests.test_desktop_profiles",
         "artifact_dir": ROOT / "test-artifacts" / "desktop",
-        "default_workers": 3,
+        "default_workers": 5,
         "maximum_shards": 5,
     },
 }
@@ -185,7 +185,7 @@ def parse_args() -> argparse.Namespace:
         "--workers",
         type=int,
         default=None,
-        help="maximum isolated Chromium processes per suite (default: 4 mobile, 3 desktop)",
+        help="maximum isolated Chromium processes per suite (default: 8 mobile, 5 desktop)",
     )
     args = parser.parse_args()
     if args.workers is not None and args.workers < 1:

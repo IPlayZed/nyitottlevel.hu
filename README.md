@@ -26,7 +26,7 @@ Then open `http://localhost:4173`.
 - `scripts/build_vote_data.py` — reproducible generation of static vote data from reviewed roll-call records
 - `chat-control-report.md` — detailed research report and bibliography
 - `tests/test_site.py` — Playwright-based end-to-end browser tests
-- `tests/test_mobile_profiles.py` — interactive layout checks across every unique viewport in Playwright's built-in Chromium mobile-device catalogue; it captures twelve state screenshots per viewport and writes a geometry/font-size analysis manifest
+- `tests/test_mobile_profiles.py` — interactive layout checks across every unique viewport in Playwright's built-in Chromium mobile-device catalogue; it captures twenty-three state screenshots per viewport, rejects black/compositor-corrupted frames, and writes a geometry/font-size analysis manifest
 - `tests/test_desktop_profiles.py` — stateful visual checks for the documented desktop support matrix
 - `scripts/run_visual_tests.py` — parallel visual-test runner that shards profiles across isolated Chromium processes and merges their manifests deterministically
 
@@ -44,7 +44,7 @@ python3 -m venv .venv
 .venv/bin/python -m unittest tests/test_desktop_profiles.py -v
 ```
 
-The two visual suites can be run substantially faster in isolated parallel processes. Four workers are used by default, and the worker count can be lowered on memory-constrained machines:
+The two visual suites run in isolated parallel processes. Mobile testing uses up to eight workers by default; desktop testing uses five because it currently has five profiles. The worker count can be lowered on memory-constrained machines:
 
 ```bash
 .venv/bin/python scripts/run_visual_tests.py all
@@ -53,9 +53,9 @@ The two visual suites can be run substantially faster in isolated parallel proce
 
 Each process owns its Playwright driver, Chromium instance, loopback server, and disjoint profile shard. This avoids sharing Playwright's synchronous API across threads. Shard manifests are merged atomically in profile order only after every process succeeds. The runner also writes a `review.html` gallery that groups every viewport by screenshot state, so visual comparisons can be reviewed as batches instead of one image at a time.
 
-The mobile-profile run writes ignored artifacts to `test-artifacts/mobile/`: top-of-page, the hero envelope’s open state, paused-motion header, action cards, both phases of mail step 2, user-key encryption, rare-result magnification, mass-surveillance mode, the filtered help directory, the selected vote, and the safeguards for every unique viewport. It also measures label containment in all four encryption modes. `manifest.json` records the tested state, screenshot paths, font-size floors, overlap clearances, encryption-label margins, horizontal overflow, and browser errors. These generated artifacts are intentionally excluded from Git.
+The mobile-profile run writes ignored artifacts to `test-artifacts/mobile/`: top-of-page, the hero envelope’s open state, paused-motion header, action cards, both phases of mail step 2, the redesigned service-inspection and before-sealing mail scenes, all four encryption stories, rare-result magnification, mass-surveillance mode, the filtered help directory, the selected vote, and the safeguards for every unique viewport. It also measures label containment in every encryption story. `manifest.json` records the tested state, screenshot paths, font-size floors, overlap clearances, encryption-story margins, horizontal overflow, and browser errors. These generated artifacts are intentionally excluded from Git.
 
-The desktop-profile run applies the same stateful visual review to the documented 1024, 1366, 1440, 1920, and 2560-pixel desktop widths and captures all four encryption modes. Its ignored screenshots and analysis manifest are written to `test-artifacts/desktop/`.
+The desktop-profile run applies the same stateful visual review to the documented 1024, 1366, 1440, 1920, and 2560-pixel desktop widths, captures all four encryption modes plus navigation, institution, and voting states, and rejects black/compositor-corrupted frames. Its ignored screenshots and analysis manifest are written to `test-artifacts/desktop/`.
 
 ## Feedback
 

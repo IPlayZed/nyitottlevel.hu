@@ -6,6 +6,7 @@ import pathlib
 import threading
 import unittest
 
+from PIL import Image, ImageStat
 from playwright.sync_api import sync_playwright
 
 
@@ -94,6 +95,16 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
             f"{label} escapes right",
         )
 
+    def assert_not_black_frame(self, path, label):
+        with Image.open(path) as image:
+            sample = image.convert("L").resize((32, 32))
+            low, high = sample.getextrema()
+            mean = ImageStat.Stat(sample).mean[0]
+            black_fraction = sum(pixel <= 8 for pixel in sample.getdata()) / (32 * 32)
+        self.assertGreater(mean, 10, f"{label}: screenshot is effectively black")
+        self.assertGreater(high - low, 8, f"{label}: screenshot has no visible content variation")
+        self.assertLess(black_fraction, .08, f"{label}: {black_fraction:.1%} of the screenshot is black")
+
     def test_desktop_support_matrix_with_clicked_and_scrolled_states(self):
         for profile_index, (name, width, height) in self.viewports:
             with self.subTest(profile=name):
@@ -111,10 +122,18 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
 
                     def capture(key, filename, selector=None):
                         path = artifact_dir / filename
-                        if selector:
-                            page.locator(selector).screenshot(path=str(path), type="jpeg", quality=62)
-                        else:
-                            page.screenshot(path=str(path), type="jpeg", quality=62)
+                        for attempt in range(3):
+                            page.wait_for_timeout(80 + attempt * 80)
+                            if selector:
+                                page.locator(selector).screenshot(path=str(path), type="jpeg", quality=62, animations="disabled")
+                            else:
+                                page.screenshot(path=str(path), type="jpeg", quality=62, animations="disabled")
+                            try:
+                                self.assert_not_black_frame(path, f"{name}: {key}")
+                                break
+                            except AssertionError:
+                                if attempt == 2:
+                                    raise
                         screenshots[key] = str(path.relative_to(ROOT))
 
                     capture("top", "01-top.jpg")
@@ -137,7 +156,16 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                     self.assertEqual(page.locator(".letter-seal").count(), 0)
                     page.locator("#motionToggle").click()
                     capture("paused_header", "02-paused-header.jpg", ".site-header")
+                    if page.locator("#menuButton").is_visible():
+                        page.locator("#menuButton").click()
+                        capture("navigation_open", "02b-navigation-open.jpg")
+                        page.locator("#menuButton").click()
+                    else:
+                        page.locator(".desktop-nav .nav-group").first.hover()
+                        capture("navigation_open", "02b-navigation-open.jpg")
                     capture("action_cards", "03-action-cards.jpg", ".action-grid")
+                    capture("institution_intro", "03a-institution-intro.jpg", "#intezmenyek .chapter-heading")
+                    capture("institution_cards", "03b-institution-cards.jpg", "#intezmenyek .institution-path")
 
                     page.locator('mail-story [data-step="1"]').click()
                     page.evaluate("""phase => {
@@ -154,8 +182,43 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                       const story = document.querySelector('mail-story');
                       story.querySelector('.mail-e2ee-no-key').style.opacity = '0';
                       story.querySelector('.mail-e2ee-key').style.opacity = '1';
+                      story.querySelector('.mail-object').classList.add('is-open');
+                      story.querySelector('.mail-envelope-flap').style.transform = 'scaleY(-1)';
+                      story.querySelector('.mail-note').style.transform = 'translateY(-76px) rotate(-2deg)';
+                      story.querySelector('.mail-lock').style.opacity = '.3';
                     }""")
                     capture("mail_recipient_key", "05-mail-recipient-key.jpg", "mail-story .interactive-card")
+                    page.locator('mail-story [data-step="2"]').click()
+                    page.evaluate("""() => {
+                      const story = document.querySelector('mail-story');
+                      story.querySelectorAll('*').forEach(element => { element.style.animation = 'none'; });
+                      story.querySelector('.mail-object').classList.add('is-open');
+                      story.querySelector('.mail-envelope-flap').style.transform = 'scaleY(-1)';
+                      story.querySelector('.mail-note').style.transform = 'translateY(-88px) rotate(-1deg)';
+                      story.querySelector('.mail-lock').style.opacity = '.2';
+                      const scanner = story.querySelector('.mail-scanner');
+                      scanner.style.opacity = '1';
+                      scanner.style.transform = 'translate(-50%,-20px)';
+                    }""")
+                    capture("mail_service_inspection", "05b-mail-service-inspection.jpg", "mail-story .interactive-card")
+                    page.locator('mail-story [data-step="3"]').click()
+                    page.evaluate("""() => {
+                      const story = document.querySelector('mail-story');
+                      story.querySelectorAll('*').forEach(element => { element.style.animation = 'none'; });
+                      story.querySelector('.mail-object').classList.add('is-open');
+                      story.querySelector('.mail-envelope-flap').style.transform = 'scaleY(-1)';
+                      const note = story.querySelector('.mail-note');
+                      note.style.transform = 'none';
+                      const noteBox = note.getBoundingClientRect();
+                      const screenBox = story.querySelector('.mail-device-screen').getBoundingClientRect();
+                      const travel = screenBox.left + screenBox.width / 2 - noteBox.left - noteBox.width / 2;
+                      note.style.transform = `translate(${travel}px,-14px) rotate(-2deg)`;
+                      story.querySelector('.mail-lock').style.opacity = '0';
+                      const scanner = story.querySelector('.mail-scanner');
+                      scanner.style.opacity = '1';
+                      scanner.style.transform = 'translate(-50%,0)';
+                    }""")
+                    capture("mail_before_seal", "05c-mail-before-seal.jpg", "mail-story .interactive-card")
 
                     encryption_label_margins = []
                     encryption_captures = {
@@ -167,23 +230,24 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                     for mode, (key, filename) in encryption_captures.items():
                         page.locator(f'encryption-layers [data-encryption="{mode}"]').click()
                         capture(key, filename, "encryption-layers .encryption-shell")
-                        diagram = page.locator("encryption-layers .crypto-diagram").bounding_box()
+                        diagram = page.locator("encryption-layers .lock-story-stage").bounding_box()
                         labels = page.locator(
-                            "encryption-layers .crypto-packet:visible, "
-                            "encryption-layers .crypto-key-chip:visible, "
-                            "encryption-layers .crypto-access-state:visible"
+                            "encryption-layers .story-message:visible, "
+                            "encryption-layers .story-key:visible, "
+                            "encryption-layers .story-no-key:visible, "
+                            "encryption-layers .provider-window:visible, "
+                            "encryption-layers .story-track > b:visible"
                         )
                         for index, label in enumerate(labels.all()):
                             label_box = label.bounding_box()
-                            self.assert_inside(label_box, diagram, f"{name}: {mode} diagram label {index + 1}")
+                            self.assert_inside(label_box, diagram, f"{name}: {mode} story label {index + 1}")
                             encryption_label_margins.append(round(min(
                                 label_box["x"] - diagram["x"],
                                 diagram["x"] + diagram["width"] - label_box["x"] - label_box["width"],
                             ), 2))
                         graphics = page.locator(
-                            "encryption-layers .crypto-device:visible, "
-                            "encryption-layers .crypto-server:visible, "
-                            "encryption-layers .crypto-database:visible"
+                            "encryption-layers .story-avatar:visible, "
+                            "encryption-layers .journey-mail:visible"
                         )
                         for index, graphic in enumerate(graphics.all()):
                             graphic_box = graphic.bounding_box()
@@ -197,25 +261,33 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                                 diagram["x"] + diagram["width"] - 6,
                                 f"{name}: {mode} graphic {index + 1} lacks right shadow clearance",
                             )
-                        states = [
-                            state.bounding_box()
-                            for state in page.locator("encryption-layers .crypto-access-state:visible").all()
-                        ]
-                        if len(states) == 2:
-                            first, second = states
-                            separated = (
-                                first["x"] + first["width"] <= second["x"]
-                                or second["x"] + second["width"] <= first["x"]
-                                or first["y"] + first["height"] <= second["y"]
-                                or second["y"] + second["height"] <= first["y"]
-                            )
-                            self.assertTrue(separated, f"{name}: {mode} access-state chips overlap")
+                        hub = page.locator("encryption-layers .story-hub")
+                        self.assert_inside(
+                            hub.locator(".provider-window").bounding_box(),
+                            hub.bounding_box(),
+                            f"{name}: {mode} provider view",
+                        )
                     capture("rare_results", "07-rare-results.jpg", "detection-lab .rate-magnifier")
+                    page.locator("#messageTotal").fill("1000000")
+                    capture("variable_total_math", "07b-variable-total-math.jpg", "detection-lab .base-rate")
                     page.locator('surveillance-contrast [data-surveillance="mass"]').click()
                     capture("mass_surveillance", "08-mass-surveillance.jpg", "surveillance-contrast .surveillance-shell")
+                    abuse_buttons = page.locator("abuse-simulator [data-abuse]")
+                    for index, button in enumerate(abuse_buttons.all()):
+                        icon_box = button.locator("span").bounding_box()
+                        self.assert_inside(icon_box, button.bounding_box(), f"{name}: abuse icon {index + 1}")
+                        self.assertGreaterEqual(icon_box["width"], 36, f"{name}: abuse icon {index + 1} is too small")
+                    abuse_buttons.nth(2).hover()
+                    capture("abuse_tabs_hover", "08b-abuse-tabs-hover.jpg", "abuse-simulator .abuse-shell")
                     page.locator('[data-connection-filter="help"]').click()
                     capture("help_directory", "09-help-directory.jpg", "#kapcsolodas .connection-explorer")
+                    capture("vote_chronology", "09b-vote-chronology.jpg", "#szavazas .vote-chronology")
                     capture("vote_explorer", "10-vote-explorer.jpg", "vote-explorer .vote-explorer-shell")
+                    for card in page.locator("vote-explorer .member-grid article").all():
+                        label_box = card.locator(".member-position").bounding_box()
+                        name_box = card.locator("h5").bounding_box()
+                        self.assertTrue(card.locator("h5").inner_text().strip(), f"{name}: empty member name")
+                        self.assertGreaterEqual(name_box["y"], label_box["y"] + label_box["height"] - 1, f"{name}: vote label covers member name")
                     capture("safeguards", "11-safeguards.jpg", "safeguard-builder .safeguard-shell")
 
                     action_gaps = []
@@ -243,7 +315,7 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                                 "horizontal_overflow_px": overflow,
                                 "minimum_action_copy_to_button_gap_px": round(min(action_gaps), 2),
                                 "minimum_readable_helper_font_px": min(helper_sizes),
-                                "minimum_encryption_label_edge_margin_px": min(encryption_label_margins),
+                                "minimum_encryption_story_edge_margin_px": min(encryption_label_margins),
                                 "opened_letter_sheet_rise_px": round(letter_box["y"] - sheet_box["y"], 2),
                                 "browser_errors": errors,
                             },
