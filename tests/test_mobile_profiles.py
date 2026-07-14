@@ -94,6 +94,40 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     page.screenshot(path=str(top_path), type="jpeg", quality=58)
                     screenshot_paths["top"] = str(top_path.relative_to(ROOT))
 
+                    page.evaluate("""() => {
+                      const letter = document.querySelector('.moving-letter');
+                      const postman = document.querySelector('.hero-postman');
+                      [...letter.querySelectorAll('*'), letter, postman, ...postman.querySelectorAll('*')]
+                        .forEach(element => { element.style.animation = 'none'; });
+                      const compactHero = innerWidth <= 600;
+                      letter.style.transform = compactHero
+                        ? 'translateX(48px) scale(.72) rotate(-1deg)'
+                        : 'translateX(32px) rotate(-1deg)';
+                      letter.querySelector('.letter-flap').style.transform = 'scaleY(-1)';
+                      letter.querySelector('.letter-sheet').style.transform = 'translateY(-31px)';
+                      letter.querySelector('.letter-heart').style.opacity = '0';
+                      postman.style.transform = 'translateX(92px) translateY(-2px) scale(.8)';
+                      postman.querySelector('.postman-arm--front').style.transform = 'rotate(-96deg) translateY(-2px)';
+                    }""")
+                    hero_open_path = artifact_dir / "02-hero-mail-open.jpg"
+                    page.locator(".post-office").screenshot(path=str(hero_open_path), type="jpeg", quality=64)
+                    screenshot_paths["hero_mail_open"] = str(hero_open_path.relative_to(ROOT))
+                    letter_box = page.locator(".moving-letter").bounding_box()
+                    sheet_box = page.locator(".letter-sheet").bounding_box()
+                    pocket_box = page.locator(".letter-pocket").bounding_box()
+                    speech_box = page.locator(".speech-cloud").bounding_box()
+                    self.assertLess(sheet_box["y"], letter_box["y"], profile_label)
+                    self.assert_inside(sheet_box, page.locator(".post-office").bounding_box(), f"{profile_label}: opened letter sheet")
+                    self.assert_inside(pocket_box, letter_box, f"{profile_label}: envelope front pocket")
+                    if viewport["width"] <= 380:
+                        self.assertLessEqual(
+                            speech_box["y"] + speech_box["height"],
+                            sheet_box["y"] + 2,
+                            f"{profile_label}: quote card obscures the opened letter",
+                        )
+                    self.assertEqual(page.locator(".letter-seal").count(), 0)
+                    self.assertEqual(page.locator(".letter-heart").evaluate("element => getComputedStyle(element).opacity"), "0")
+
                     motion = page.locator("#motionToggle")
                     self.assertTrue(motion.is_visible(), profile_label)
                     self.assertEqual(motion.locator(".button-label").inner_text(), "Animáció leállítása")
@@ -247,6 +281,7 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                             "minimum_readable_helper_font_px": min(readable_sizes),
                             "minimum_diagram_label_font_px": min(diagram_sizes),
                             "visible_help_directory_cards": visible_connection_cards,
+                            "opened_letter_sheet_rise_px": round(letter_box["y"] - sheet_box["y"], 2),
                             "horizontal_overflow_sources": overflow_sources,
                             "browser_errors": errors,
                         },

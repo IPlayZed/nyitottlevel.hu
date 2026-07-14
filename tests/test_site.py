@@ -83,6 +83,8 @@ class SiteTests(unittest.TestCase):
 
     def test_mail_story_and_version_switcher(self):
         self.assertEqual(self.page.locator(".moving-letter .letter-flap").count(), 1)
+        self.assertEqual(self.page.locator(".moving-letter .letter-pocket").count(), 1)
+        self.assertEqual(self.page.locator(".moving-letter .letter-seal").count(), 0)
         self.assertEqual(self.page.locator("mail-story .mail-opening-label").count(), 1)
         self.page.locator("mail-story [data-mail-next]").click()
         self.assertIn("végpontok közötti titkosítás", self.page.locator("mail-story h3").inner_text())

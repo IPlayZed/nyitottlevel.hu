@@ -87,6 +87,23 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                         screenshots[key] = str(path.relative_to(ROOT))
 
                     capture("top", "01-top.jpg")
+                    page.evaluate("""() => {
+                      const letter = document.querySelector('.moving-letter');
+                      const postman = document.querySelector('.hero-postman');
+                      [...letter.querySelectorAll('*'), letter, postman, ...postman.querySelectorAll('*')]
+                        .forEach(element => { element.style.animation = 'none'; });
+                      letter.style.transform = 'translateX(32px) rotate(-1deg)';
+                      letter.querySelector('.letter-flap').style.transform = 'scaleY(-1)';
+                      letter.querySelector('.letter-sheet').style.transform = 'translateY(-31px)';
+                      letter.querySelector('.letter-heart').style.opacity = '0';
+                      postman.style.transform = 'translateX(92px) translateY(-2px) scale(.8)';
+                      postman.querySelector('.postman-arm--front').style.transform = 'rotate(-96deg) translateY(-2px)';
+                    }""")
+                    capture("hero_mail_open", "02-hero-mail-open.jpg", ".post-office")
+                    letter_box = page.locator(".moving-letter").bounding_box()
+                    sheet_box = page.locator(".letter-sheet").bounding_box()
+                    self.assertLess(sheet_box["y"], letter_box["y"], name)
+                    self.assertEqual(page.locator(".letter-seal").count(), 0)
                     page.locator("#motionToggle").click()
                     capture("paused_header", "02-paused-header.jpg", ".site-header")
                     capture("action_cards", "03-action-cards.jpg", ".action-grid")
@@ -141,6 +158,7 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                                 "horizontal_overflow_px": overflow,
                                 "minimum_action_copy_to_button_gap_px": round(min(action_gaps), 2),
                                 "minimum_readable_helper_font_px": min(helper_sizes),
+                                "opened_letter_sheet_rise_px": round(letter_box["y"] - sheet_box["y"], 2),
                                 "browser_errors": errors,
                             },
                             "screenshot_bytes": {
