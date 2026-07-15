@@ -193,6 +193,12 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     if menu.is_visible():
                         self.assert_inside(menu.bounding_box(), header_box, f"{profile_label}: menu")
 
+                    misconceptions_path = artifact_dir / "02c-common-misconceptions.jpg"
+                    page.locator("#gyakori-tevhitek").screenshot(
+                        path=str(misconceptions_path), type="jpeg", quality=60, animations="disabled"
+                    )
+                    screenshot_paths["common_misconceptions"] = str(misconceptions_path.relative_to(ROOT))
+
                     action_gaps = []
                     for index, card in enumerate(page.locator(".action-grid article").all()):
                         paragraph_box = card.locator("p").bounding_box()
