@@ -209,6 +209,15 @@ class SiteTests(unittest.TestCase):
         self.assertIn("<img src=x onerror=alert(2)>", quiz.locator(".quiz-feedback").inner_text())
 
     def test_mail_story_and_version_switcher(self):
+        postal_map = self.page.locator(".postal-map")
+        self.assertEqual(postal_map.locator(".postal-card").count(), 7)
+        first_postal_card = postal_map.locator(".postal-card").first
+        self.assertIsNone(first_postal_card.locator(".postal-card__front").get_attribute("aria-hidden"))
+        first_postal_card.locator(".postal-card__front [data-flip]").click()
+        self.assertTrue("is-flipped" in (first_postal_card.get_attribute("class") or ""))
+        self.assertEqual(first_postal_card.locator(".postal-card__back").get_attribute("aria-hidden"), "false")
+        first_postal_card.locator(".postal-card__back [data-flip]").click()
+        self.assertFalse("is-flipped" in (first_postal_card.get_attribute("class") or ""))
         self.assertEqual(self.page.locator(".moving-letter .letter-flap").count(), 1)
         self.assertEqual(self.page.locator(".moving-letter .letter-pocket").count(), 1)
         self.assertEqual(self.page.locator(".moving-letter .letter-seal").count(), 0)
@@ -238,30 +247,30 @@ class SiteTests(unittest.TestCase):
         self.assertEqual(self.page.locator("mail-story .mail-envelope-pocket").count(), 1)
         self.assertEqual(self.page.locator("mail-story .mail-note > i").count(), 2)
         self.page.locator("mail-story [data-mail-next]").click()
-        self.assertIn("végpontok közötti titkosítás", self.page.locator("mail-story h3").inner_text())
+        self.assertIn("olvashatatlan, titkosított adat", self.page.locator("mail-story h3").inner_text())
         mail_story = self.page.locator("mail-story")
         self.assertEqual(mail_story.locator(".mail-object.is-e2ee").count(), 1)
         self.assertIn("7F A9", mail_story.locator(".mail-note-cipher").inner_text())
         self.assertEqual(mail_story.locator(".mail-e2ee-no-key").count(), 1)
         self.assertEqual(mail_story.locator(".mail-e2ee-key").count(), 1)
-        self.assertEqual(mail_story.locator(".mail-e2ee-key-traveller").count(), 1)
+        self.assertEqual(mail_story.locator(".mail-e2ee-key-traveller").count(), 0)
+        self.assertIn("a kulcs nem kerül a szolgáltatóhoz", mail_story.locator(".mail-e2ee-key").inner_text().lower())
         comparison = mail_story.locator(".mail-key-comparison").inner_text().lower()
         self.assertIn("kulcs nélkül", comparison)
-        self.assertIn("a címzett kulcsával", comparison)
+        self.assertIn("a címzett digitális kulcsával", comparison)
         explanation = mail_story.locator(".mail-copy").inner_text().lower()
         self.assertIn("kulcs nélkül", explanation)
-        self.assertIn("a címzett egyik", explanation)
-        self.assertIn("megfelelő kulccsal rendelkező készüléke", explanation)
+        self.assertIn("a címzett készüléke tudja visszaállítani", explanation)
         self.page.locator('mail-story [data-step="2"]').click()
         self.assertEqual(mail_story.locator(".mail-inspection-booth").count(), 1)
         self.assertEqual(mail_story.locator(".mail-object.is-inspected").count(), 1)
-        self.assertIn("ki kell nyitni", mail_story.locator("h3").inner_text().lower())
-        self.assertIn("papír előjön", mail_story.locator(".mail-copy").inner_text().lower())
+        self.assertIn("ha a szolgáltató az eredeti üzenetet vizsgálja", mail_story.locator("h3").inner_text().lower())
+        self.assertIn("a belső boríték itt felnyílik", mail_story.locator(".mail-copy").inner_text().lower())
         self.page.locator('mail-story [data-step="3"]').click()
         self.assertEqual(mail_story.locator(".mail-before-device").count(), 1)
         self.assertEqual(mail_story.locator(".mail-object.is-before-check").count(), 1)
         self.assertIn("lezárás előtt", mail_story.locator("h3").inner_text().lower())
-        self.assertIn("csak ezután kerül", mail_story.locator(".mail-copy").inner_text().lower())
+        self.assertIn("csak ezután zárja le a készülék", mail_story.locator(".mail-copy").inner_text().lower())
         self.page.get_by_role("tab", name="2.0 · tervezett").click()
         self.assertEqual(self.page.locator("version-switcher h3").inner_text(), "Chat Control 2.0")
         self.assertIn("nincs végleges megállapodás", self.page.locator("version-switcher").inner_text().lower())
@@ -645,8 +654,13 @@ class SiteTests(unittest.TestCase):
         self.assertIn("7F A9", encryption.locator(".provider-window").inner_text())
         self.assertIn("Találkozunk 6-kor?", encryption.locator(".recipient-message").inner_text())
         self.assertEqual(encryption.locator(".story-key.is-owned").count(), 2)
+        self.assertEqual(
+            encryption.locator(".story-key.is-owned").all_inner_texts(),
+            ["Beszélgetés kulcsa", "Beszélgetés kulcsa"],
+        )
         self.assertIn("E2EE", encryption.locator(".technical-name summary").inner_text())
-        self.assertIn("szolgáltató saját rendszerében", encryption.locator(".provider-window small").inner_text().lower())
+        self.assertIn("saját rendszerében", encryption.locator(".story-legend").inner_text().lower())
+        self.assertIn("nincs tartalomkulcsa", encryption.locator(".story-no-key").inner_text().lower())
         self.assertEqual(encryption.locator(".legend-service-screen").count(), 1)
         self.assertEqual(encryption.locator(".legend-window").count(), 0)
         self.assertNotIn("🔒", encryption.inner_text())
@@ -654,10 +668,18 @@ class SiteTests(unittest.TestCase):
         encryption.get_by_role("tab", name="2 · A raktáros kulcsa").click()
         self.assertEqual(encryption.locator(".service-answer strong").inner_text(), "IGEN")
         self.assertIn("Családi fotók", encryption.locator(".provider-window").inner_text())
+        self.assertEqual(encryption.locator(".story-key.is-owned").inner_text(), "Tárolási kulcs")
         encryption.get_by_role("tab", name="3 · A kulcs nálad marad").click()
         self.assertEqual(encryption.locator(".service-answer strong").inner_text(), "NEM")
         self.assertEqual(encryption.locator(".story-actor").count(), 2)
         self.assertEqual(encryption.locator(".story-recipient").count(), 0)
+        self.assertEqual(encryption.locator(".story-key.is-owned").inner_text(), "Fájlkulcs")
+        self.assertIn("nincs fájlkulcsa", encryption.locator(".story-no-key").inner_text().lower())
+        encryption.get_by_role("tab", name="1 · Két zárt útszakasz").click()
+        self.assertEqual(
+            encryption.locator(".story-key.is-owned").all_inner_texts(),
+            ["1. kapcsolat kulcsa", "1. és 2. kapcsolat kulcsa", "2. kapcsolat kulcsa"],
+        )
 
         builder = self.page.locator("safeguard-builder")
         self.assertEqual(builder.locator("[data-safeguard]").count(), 6)
@@ -828,7 +850,7 @@ class SiteTests(unittest.TestCase):
 
     def test_hungarian_copy_is_responsive(self):
         checks = {
-            "mail-story .mail-opening-label": "A postás elolvassa",
+            "mail-story .mail-opening-label": "A szolgáltató hozzáférhet",
             ".private-talks h3": "A magánbeszélgetés attól még nem nyilvános, hogy digitális eszköz közvetíti",
             ".vote-chronology h3": "Mi történt, és melyik „Chat Controlról” döntöttek?",
             ".footer-brand div > span": "Egy aggódó állampolgár ismeretterjesztő oldala.",

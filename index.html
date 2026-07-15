@@ -289,9 +289,96 @@
           <p class="chapter-number">01 · A lezárt levél</p>
           <h2 id="posta-title">Először értsük meg, mi történik egy üzenettel</h2>
           <p>
-            Nem kell tudnod, mi az az algoritmus vagy a szerver. Képzeld el úgy, mintha levelet adnál fel.
+            Képzeld el úgy, mintha levelet adnál fel. Az ábrákon végig ugyanazok a jelek szerepelnek:
           </p>
         </div>
+
+        <section class="postal-map reveal" aria-label="A levélhasonlat jelmagyarázata">
+          <article class="postal-card" data-postal-flip>
+            <div class="postal-card__inner">
+              <div class="postal-card__face postal-card__front">
+                <span class="postal-card__emoji" aria-hidden="true">✉️</span><h3>Papír</h3><p>Az üzenet eredeti, ember számára érthető tartalma.</p>
+                <button type="button" data-flip aria-expanded="false">Mit jelöl? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="postal-card__face postal-card__back" aria-hidden="true" inert>
+                <span class="postal-card__emoji" aria-hidden="true">✉️</span><h3>Papír</h3><p>Ez az a mondat vagy kép, amelyet a küldő a küldés előtt, a címzett pedig megnyitás után el tud olvasni vagy meg tud nézni.</p>
+                <button type="button" data-flip>Vissza <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+          <article class="postal-card" data-postal-flip>
+            <div class="postal-card__inner">
+              <div class="postal-card__face postal-card__front">
+                <span class="postal-card__emoji" aria-hidden="true">🔒</span><h3>Lezárt belső boríték</h3><p>Titkosított, kulcs nélkül olvashatatlan tartalom.</p>
+                <button type="button" data-flip aria-expanded="false">Mit jelöl? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="postal-card__face postal-card__back" aria-hidden="true" inert>
+                <span class="postal-card__emoji" aria-hidden="true">🔒</span><h3>Lezárt belső boríték</h3><p>Az üzenet titkosított változata. A megfelelő digitális kulcs nélkül csak olvashatatlan adat látszik belőle.</p>
+                <button type="button" data-flip>Vissza <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+          <article class="postal-card" data-postal-flip>
+            <div class="postal-card__inner">
+              <div class="postal-card__face postal-card__front">
+                <span class="postal-card__emoji" aria-hidden="true">🔑</span><h3>Digitális kulcs</h3><p>Információ, amely az üzenet feloldásához kell.</p>
+                <button type="button" data-flip aria-expanded="false">Mit jelöl? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="postal-card__face postal-card__back" aria-hidden="true" inert>
+                <span class="postal-card__emoji" aria-hidden="true">🔑</span><h3>Digitális kulcs</h3><p>A feloldáshoz szükséges, készüléken vagy szolgáltatónál őrzött információ. Nem valódi kulcs, és nem feltétlenül jelszó.</p>
+                <button type="button" data-flip>Vissza <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+          <article class="postal-card" data-postal-flip>
+            <div class="postal-card__inner">
+              <div class="postal-card__face postal-card__front">
+                <span class="postal-card__emoji" aria-hidden="true">📱↔️📱</span><h3>Feladó és címzett</h3><p>A beszélgetés résztvevőinek készülékei.</p>
+                <button type="button" data-flip aria-expanded="false">Mit jelöl? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="postal-card__face postal-card__back" aria-hidden="true" inert>
+                <span class="postal-card__emoji" aria-hidden="true">📱↔️📱</span><h3>Feladó és címzett</h3><p>A küldő és a címzett készüléke. Végpontok közötti titkosításnál itt lehetnek a tartalom feloldásához szükséges kulcsok.</p>
+                <button type="button" data-flip>Vissza <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+          <article class="postal-card" data-postal-flip>
+            <div class="postal-card__inner">
+              <div class="postal-card__face postal-card__front">
+                <span class="postal-card__emoji" aria-hidden="true">🏤</span><h3>Posta és postás</h3><p>A szolgáltatás továbbítja az üzenetet.</p>
+                <button type="button" data-flip aria-expanded="false">Mit jelöl? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="postal-card__face postal-card__back" aria-hidden="true" inert>
+                <span class="postal-card__emoji" aria-hidden="true">🏤</span><h3>Posta és postás</h3><p>Az üzenetet továbbító szolgáltatás és annak rendszere. A hasonlat postása nem egy konkrét alkalmazott: az üzenetet jellemzően automatizált rendszerek továbbítják.</p>
+                <button type="button" data-flip>Vissza <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+          <article class="postal-card" data-postal-flip>
+            <div class="postal-card__inner">
+              <div class="postal-card__face postal-card__front">
+                <span class="postal-card__emoji" aria-hidden="true">🤖</span><h3>Ellenőrzőgép</h3><p>Automatikusan vizsgálja át az üzenetet.</p>
+                <button type="button" data-flip aria-expanded="false">Mit jelöl? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="postal-card__face postal-card__back" aria-hidden="true" inert>
+                <span class="postal-card__emoji" aria-hidden="true">🤖</span><h3>Ellenőrzőgép</h3><p>Az üzenet tartalmát automatikusan átvizsgáló rendszer. Ha egy jelzést később ember néz meg, azt külön jelezzük.</p>
+                <button type="button" data-flip>Vissza <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+          <article class="postal-card" data-postal-flip>
+            <div class="postal-card__inner">
+              <div class="postal-card__face postal-card__front">
+                <span class="postal-card__emoji" aria-hidden="true">⚖️</span><h3>Hatóság vagy bíróság</h3><p>Dönthet arról, mit keressen a szolgáltató.</p>
+                <button type="button" data-flip aria-expanded="false">Mit jelöl? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="postal-card__face postal-card__back" aria-hidden="true" inert>
+                <span class="postal-card__emoji" aria-hidden="true">⚖️</span><h3>Hatóság vagy bíróság</h3><p>Elrendelheti vagy jóváhagyhatja, mit keressen a szolgáltató; ettől még nem kap automatikusan digitális kulcsot.</p>
+                <button type="button" data-flip>Vissza <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+        </section>
 
         <mail-story class="reveal"></mail-story>
 
@@ -300,9 +387,11 @@
           <div>
             <strong>Egyszerűen:</strong>
             <p>
-              A <b>végpontok közötti titkosítás</b> olyan, mint egy doboz, amelyet csak te és a címzett tudtok
-              kinyitni. Ha a szolgáltató ellenőrizni akarja a tartalmát, akkor vagy kulcsot kell kapnia, vagy a
-              levelet még lezárás előtt kell megnéznie.
+              A <b>végpontok közötti titkosítás</b> olyan, mintha a telefonod különleges belső borítékba zárná
+              az üzenetet, amelyet csak a beszélgetés résztvevőinek készülékei tudnak kinyitni. A „kulcs” itt
+              digitális információ, amely a lezárt adatot ismét érthető üzenetté alakítja. Ha a szolgáltató az
+              olvasható tartalmat akarja automatikusan ellenőrizni, hozzáférést kell kapnia a feloldáshoz, vagy
+              még a lezárás előtt kell átvizsgálnia az üzenetet.
             </p>
           </div>
         </aside>

@@ -35,9 +35,9 @@ class ReactiveElement extends HTMLElement {
 
 const mailSteps = [
   {
-    label: "Nincs végponti zár",
-    title: "A szolgáltatónál olvasható üzenethez nincs szükség külön feltörésre",
-    body: "Egy nyitva átadott boríték tartalmát a postás külön kulcs nélkül el tudja olvasni. Hasonlóan, a nem végpontok között titkosított üzenetet a szolgáltató rendszere olvasható formában kezelheti.",
+    label: "A szolgáltatónál olvasható",
+    title: "A szolgáltató külön feltörés nélkül hozzáférhet a nála olvasható üzenethez",
+    body: "A hasonlatban a posta központjában kinyitható a belső boríték, ezért a szolgáltató rendszere olvasható formában kezelheti a tartalmat. Ettől az üzenet még nem feltétlenül utazik nyitottan az interneten: útközben külön védelem akadályozhatja meg, hogy egy kívülálló beleolvasson.",
     note: "Találkozunk 6-kor a parkban?",
     open: true,
     lock: false,
@@ -46,8 +46,8 @@ const mailSteps = [
   },
   {
     label: "A lezárt boríték · kulcs nélkül olvashatatlan",
-    title: "A végpontok közötti titkosításnál kulcs nélkül csak értelmetlen jelsor látszik",
-    body: "A küldő telefonja az olvasható üzenetet titkosított jelsorrá alakítja. Ha a postás, a szolgáltató vagy egy támadó kulcs nélkül próbálja megnyitni, csak összekuszált karaktereket lát. Az eredeti mondatot a címzett egyik, megfelelő kulccsal rendelkező készüléke tudja visszaállítani.",
+    title: "Kulcs nélkül csak olvashatatlan, titkosított adat látszik",
+    body: "A küldő telefonja az olvasható üzenetet titkosított adattá alakítja. Ha a szolgáltató vagy egy támadó a megfelelő digitális kulcs nélkül próbál hozzáférni, nem kapja meg az eredeti tartalmat. Az eredeti üzenetet csak a címzett készüléke tudja visszaállítani, mert azon van a megfelelő digitális kulcs.",
     note: "Találkozunk 6-kor a parkban?",
     cipher: "7F A9 C2 10 · 4D 8B E1 6C",
     open: false,
@@ -57,9 +57,9 @@ const mailSteps = [
     before: false,
   },
   {
-    label: "Felnyitás a közepén",
-    title: "A középen végzett ellenőrzéshez ott ki kell nyitni a levelet",
-    body: "A szolgáltató csak akkor tudja összevetni a tartalmat egy keresett mintával, ha olvashatóvá teszi. A levél tehát a szolgáltatónál már nem marad végig zárva: a papír előjön, az ellenőrzés megtörténik, majd a levél továbbmehet.",
+    label: "Feloldás a szolgáltatónál",
+    title: "Ha a szolgáltató az eredeti üzenetet vizsgálja, ott hozzá kell férnie a tartalomhoz",
+    body: "Ez az ábra azt az esetet mutatja, amikor a szolgáltató rendszere az eredeti üzenetet vizsgálja: ehhez ott olvashatóvá kell tenni a tartalmat. A hasonlatban a belső boríték itt felnyílik, a gépi ellenőrzés megtörténik, majd az üzenet újra lezárva mehet tovább. Más megoldásnál a feladó készüléke állíthat elő és továbbíthat ellenőrzési adatot; ilyenkor a szolgáltatónál nem feltétlenül nyílik fel az egész üzenet, de a készülék már feldolgozta annak tartalmát.",
     note: "Magánüzenet: találkozunk 6-kor.",
     open: false,
     lock: true,
@@ -69,8 +69,8 @@ const mailSteps = [
   },
   {
     label: "Ellenőrzés indulás előtt",
-    title: "A másik lehetőség: még lezárás előtt nézik meg a papírt",
-    body: "A telefonon az üzenet még olvasható. Az ellenőrző rendszer ott nézi meg, és csak ezután kerül a lezárt borítékba. Útközben zárva maradhat, de a tartalmat a készüléken már átvizsgálták.",
+    title: "A másik lehetőség: automatikus ellenőrzés még a lezárás előtt",
+    body: "A telefonon az üzenet még olvasható. Az ellenőrző rendszer ott vizsgálja át automatikusan, és csak ezután zárja le a készülék. Útközben a belső boríték zárva maradhat, de a tartalmat a feladó készülékén a rendszer már átvizsgálta.",
     note: "Magánüzenet: találkozunk 6-kor.",
     open: false,
     lock: true,
@@ -114,7 +114,7 @@ class MailStory extends ReactiveElement {
                 <i></i>
               </div>
               <div class="mail-phase-strip mail-phase-strip--inspection">
-                <span>1 · zárva érkezik</span><span>2 · felnyílik</span><span>3 · ellenőrzik</span>
+                <span>1 · zárva érkezik</span><span>2 · felnyílik</span><span>3 · gép vizsgálja</span>
               </div>` : ""}
             ${item.before ? `
               <div class="mail-before-device">
@@ -122,7 +122,7 @@ class MailStory extends ReactiveElement {
               </div>
               <div class="mail-before-label"><b>A te készüléked</b><small>Itt még olvasható</small></div>
               <div class="mail-phase-strip mail-phase-strip--before">
-                <span>1 · olvasható</span><span>2 · ellenőrzik</span><span>3 · lezárják</span>
+                <span>1 · olvasható</span><span>2 · gép vizsgálja</span><span>3 · lezárják</span>
               </div>` : ""}
             <div class="mail-object ${item.open ? "is-open" : ""} ${item.encrypted ? "is-e2ee" : ""} ${item.inspection ? "is-inspected" : ""} ${item.before ? "is-before-check" : ""} ${state.mailStep === 0 ? "is-postman-opened" : ""}">
               <div class="mail-note">
@@ -133,23 +133,22 @@ class MailStory extends ReactiveElement {
               <span class="mail-envelope-flap"></span>
               <span class="mail-envelope-pocket"></span>
               <span class="mail-envelope-heart">♥</span>
-              ${state.mailStep === 0 ? '<span class="mail-opening-label">A postás elolvassa</span>' : ""}
+              ${state.mailStep === 0 ? '<span class="mail-opening-label">A szolgáltató hozzáférhet</span>' : ""}
               ${item.lock ? '<span class="mail-lock"></span>' : ""}
             </div>
             ${item.encrypted ? `
               <div class="mail-e2ee-no-key">
                 <b>Kulcs nélküli próbálkozás</b>
                 <code>${item.cipher}</code>
-                <span>Olvashatatlan titkosított adat</span>
+                <span>Olvashatatlan, titkosított adat</span>
               </div>
               <div class="mail-e2ee-key">
                 <i aria-hidden="true"></i>
-                <span><b>Kulcs a címzett egyik készülékén</b><small>Csak ilyen kulccsal áll helyre az üzenet</small></span>
-              </div>
-              <i class="mail-e2ee-key-traveller" aria-hidden="true"></i>` : ""}
+                <span><b>Kulcs a címzett készülékén</b><strong>${item.note}</strong><small>Itt lesz újra olvasható. A kulcs nem kerül a szolgáltatóhoz.</small></span>
+              </div>` : ""}
             ${item.scanner ? '<span class="mail-scanner"><i></i></span>' : ""}
-            ${item.inspection ? '<span class="mail-access-label">A papír csak felnyitva vizsgálható</span>' : ""}
-            ${item.before ? '<span class="before-seal">Ellenőrzés után kerül a borítékba</span>' : ""}
+            ${item.inspection ? '<span class="mail-access-label">A tartalomhoz csak feloldás után fér hozzá</span>' : ""}
+            ${item.before ? '<span class="before-seal">Automatikus ellenőrzés még lezárás előtt</span>' : ""}
           </div>
           <div class="mail-copy">
             <p class="mini-label">${item.label}</p>
@@ -160,13 +159,13 @@ class MailStory extends ReactiveElement {
                 <div>
                   <span>Kulcs nélkül</span>
                   <code>${item.cipher}</code>
-                  <small>Csak a titkosított jelsor látszik.</small>
+                  <small>Csak olvashatatlan, titkosított adat látszik.</small>
                 </div>
                 <i aria-hidden="true">→</i>
                 <div>
-                  <span>A címzett kulcsával</span>
+                  <span>A címzett digitális kulcsával</span>
                   <strong>${item.note}</strong>
-                  <small>A címzett egyik, megfelelő kulccsal rendelkező készüléke visszaállítja az üzenetet.</small>
+                  <small>A címzett készüléke a rajta őrzött digitális kulccsal visszaállítja az üzenetet.</small>
                 </div>
               </div>` : ""}
             <div class="mail-controls">
@@ -190,45 +189,53 @@ const encryptionModes = {
     tab: "1 · Két zárt útszakasz",
     eyebrow: "Útközben védett",
     title: "Kívülálló útközben nem tud beleolvasni — a szolgáltató viszont igen",
-    body: "A levél védetten jut el a szolgáltatóhoz, ott olvashatóvá válik, majd egy másik védett úton megy tovább. A kávézó Wi-Fi-jén leskelődő idegen nem tud egyszerűen beleolvasni, de a középen álló szolgáltató igen.",
+    body: "A tartalom az első védett kapcsolaton eljut a szolgáltatóhoz, ott olvashatóvá válik, majd egy másik védett kapcsolaton megy tovább. A kávézó Wi-Fi-jén leskelődő idegen nem tud egyszerűen beleolvasni, de a középen álló szolgáltató hozzáférhet.",
     scene: "conversation",
     hub: "Szolgáltató",
     providerReads: true,
     providerView: "Találkozunk 6-kor?",
     providerViewLabel: "Olvasható mondat",
     senderPayload: "Találkozunk 6-kor?",
-    keyOwners: ["provider"],
-    routeLabel: "Úton zárva",
+    keys: {
+      sender: "1. kapcsolat kulcsa",
+      provider: "1. és 2. kapcsolat kulcsa",
+      recipient: "2. kapcsolat kulcsa",
+    },
+    routeKind: "transport",
+    routeLabels: ["1. védett útszakasz", "2. védett útszakasz"],
     steps: [
-      "A telefonod lezárja az első útra.",
-      "A szolgáltatónál kinyílik és olvasható.",
-      "Újra lezárva jut el a címzetthez.",
+      "A telefonod védi az első kapcsolatot.",
+      "A szolgáltatónál ismét olvashatóvá válik.",
+      "Egy másik védett kapcsolaton jut el a címzetthez.",
     ],
     protects: "Az internetes útvonalon leskelődőktől.",
-    limit: "A szolgáltatótól, a szerverén dolgozóktól vagy egy szerverfeltöréstől nem.",
+    limit: "A szolgáltatótól, a rendszeréhez hozzáférő munkatársaktól vagy egy szerverfeltöréstől nem.",
+    providerAnswer: "Az olvasható tartalom a szolgáltató rendszerében is megjelenik.",
     technicalTitle: "Műszaki név: HTTPS és TLS",
     technical: "A HTTPS mögött rendszerint TLS védi az adatot két pont között. Ebben a példában két külön védett kapcsolat van: a küldő és a szolgáltató, majd a szolgáltató és a címzett között. Ez nem végpontok közötti titkosítás.",
   },
   providerRest: {
     tab: "2 · A raktáros kulcsa",
     eyebrow: "Tároláskor védett",
-    title: "A doboz zárva van, de a raktáros ki tudja nyitni",
-    body: "A szolgáltató lezárva tárolja a fájlt, de a nyitásához szükséges kulcsot is ő kezeli. Egy ellopott merevlemezről nehezebb megszerezni a tartalmat, a szolgáltató saját rendszerében viszont továbbra is elolvashatja.",
+    title: "A szolgáltató a raktárban zárja le, és nála marad a kulcs",
+    body: "A szolgáltató megkapja a fájlt, majd a saját tárolási rendszerében titkosítja. A feloldáshoz szükséges digitális kulcsot is ő kezeli. Egy ellopott merevlemezről így nehezebb megszerezni a tartalmat, a szolgáltató saját rendszerében viszont olvashatóvá tudja tenni.",
     scene: "storage",
     hub: "Felhőtárhely",
     providerReads: true,
     providerView: "Családi fotók.zip",
     providerViewLabel: "Megnyitható fájl",
     senderPayload: "Családi fotók.zip",
-    keyOwners: ["provider"],
-    routeLabel: "Lezárt fájl",
+    keys: { provider: "Tárolási kulcs" },
+    routeKind: "transport",
+    routeLabels: ["Védett átvitel"],
     steps: [
-      "A fájl lezárva kerül a tárhelyre.",
-      "A szolgáltató őrzi a fájlt és a kulcsot is.",
-      "Ha szüksége van rá, fel tudja nyitni.",
+      "A szolgáltató megkapja a fájlt.",
+      "A saját tárolási rendszerében zárja le.",
+      "A saját kulcsával olvashatóvá tudja tenni.",
     ],
     protects: "Például egy ellopott adathordozó közvetlen kiolvasásától.",
     limit: "A szolgáltató saját hozzáférésétől nem.",
+    providerAnswer: "A szolgáltató a saját tárolási kulcsával feloldhatja a fájlt.",
     technicalTitle: "Műszaki név: titkosítás tároláskor, szolgáltatói kulccsal",
     technical: "A lemez vagy az adatbázis titkosítva van, de a feloldó kulcs a szolgáltató kulcskezelő rendszerében marad. Ez hasznos védelem, de nem jelent titkosságot magával a szolgáltatóval szemben.",
   },
@@ -236,22 +243,25 @@ const encryptionModes = {
     tab: "3 · A kulcs nálad marad",
     eyebrow: "Te zárod le feltöltés előtt",
     title: "A raktár csak a lezárt dobozt őrzi",
-    body: "A fájlt még a saját készülékeden zárod le, és a kulcsot nem adod át a tárhelynek. A szolgáltató tárolni tudja a lezárt fájlt, de a tartalma helyett csak értelmetlen karaktereket lát.",
+    body: "A fájlt még a saját készülékeden zárod le, és a digitális kulcsot nem adod át a tárhelynek. A szolgáltató tárolni tudja a lezárt fájlt, de az eredeti tartalom helyett csak olvashatatlan, titkosított adatot lát.",
     scene: "storage",
     hub: "Felhőtárhely",
     providerReads: false,
     providerView: "7F A9 · C2 10 · 4D 8B",
-    providerViewLabel: "Csak zagyvaság",
+    providerViewLabel: "Titkosított tartalom",
     senderPayload: "Családi fotók.zip",
-    keyOwners: ["sender"],
-    routeLabel: "Lezárt fájl",
+    keys: { sender: "Fájlkulcs" },
+    providerNoKey: "Nincs fájlkulcsa",
+    routeKind: "content",
+    routeLabels: ["Lezárt fájl"],
     steps: [
       "Te zárod le a fájlt még feltöltés előtt.",
       "A kulcs a készülékeden marad.",
       "A tárhely csak az olvashatatlan fájlt őrzi.",
     ],
     protects: "A tárhelyhez vagy a szolgáltató rendszeréhez hozzáférőktől is.",
-    limit: "A feltört készüléket, a rosszul őrzött kulcsot és a látható metaadatokat nem oldja meg.",
+    limit: "Nem véd, ha feltörik a készüléked vagy gyenge jelszót használsz; a kísérőadatokat — például a fájl méretét és feltöltési idejét — sem feltétlenül rejti el.",
+    providerAnswer: "Az eredeti tartalom helyett csak olvashatatlan, titkosított adatot kap, ha a kulcsot valóban nem adják át neki.",
     technicalTitle: "Műszaki név: felhasználói kulccsal végzett tárolási titkosítás",
     technical: "Ezt gyakran kliensoldali titkosításnak nevezik: a fájl a feltöltés előtt válik olvashatatlanná. Ez a példa felhőben tárolt fájlról szól; önmagában nem tesz egy üzenetküldést végpontok között titkosítottá.",
   },
@@ -264,17 +274,20 @@ const encryptionModes = {
     hub: "Szolgáltató",
     providerReads: false,
     providerView: "7F A9 · C2 10 · 4D 8B",
-    providerViewLabel: "Csak zagyvaság",
+    providerViewLabel: "Titkosított tartalom",
     senderPayload: "Találkozunk 6-kor?",
-    keyOwners: ["sender", "recipient"],
-    routeLabel: "Végig lezárva",
+    keys: { sender: "Beszélgetés kulcsa", recipient: "Beszélgetés kulcsa" },
+    providerNoKey: "Nincs tartalomkulcsa",
+    routeKind: "content",
+    routeLabels: ["Végig lezárt tartalom", "Végig lezárt tartalom"],
     steps: [
       "A telefonod még indulás előtt lezárja.",
       "A szolgáltatónál sem nyílik ki.",
       "Csak a címzett készüléke nyitja ki.",
     ],
     protects: "Útközben és a szolgáltatónál is védi az üzenet tartalmát.",
-    limit: "A feltört telefont, a képernyőmentést, a nem védett biztonsági mentést és minden metaadatot nem tesz láthatatlanná.",
+    limit: "Nem védi a feltört telefont vagy a nem védett biztonsági mentést, nem akadályozza meg a képernyőmentést, és a kísérőadatokat — például ki kivel és mikor beszélt — sem feltétlenül rejti el.",
+    providerAnswer: "A szolgáltató csak olvashatatlan, titkosított tartalmat kap, ha a rendszer valóban nem ad neki tartalomkulcsot.",
     technicalTitle: "Műszaki név: végpontok közötti titkosítás (E2EE)",
     technical: "Az E2EE az angol end-to-end encryption rövidítése. Helyes megvalósításnál a tartalom feloldásához szükséges kulcs nincs a szolgáltatónál; a beszélgetés résztvevőinek készülékein van.",
   },
@@ -289,16 +302,15 @@ class EncryptionLayers extends HTMLElement {
   render() {
     const item = encryptionModes[this.active];
     const isStorage = item.scene === "storage";
-    const ownsKey = (owner) => item.keyOwners.includes(owner);
-    const keyBadge = (owner, label) => ownsKey(owner)
-      ? `<span class="story-key is-owned"><i aria-hidden="true"></i>${label}</span>`
+    const keyBadge = (owner) => item.keys[owner]
+      ? `<span class="story-key is-owned"><i aria-hidden="true"></i>${item.keys[owner]}</span>`
       : "";
     this.innerHTML = `
       <section class="encryption-shell" aria-labelledby="encryption-title">
         <div class="encryption-heading">
           <p class="chapter-number">Négy titkosítási helyzet · nem ugyanott és nem ugyanattól védenek</p>
-          <h3 id="encryption-title">Kövesd a levelet: hol nyílik ki?</h3>
-          <p>A sárga kulcs azt mutatja, kinél válhat olvashatóvá a tartalom. A felhőtárhely vagy szolgáltató épületében lévő külön betekintőképernyő azt mutatja, mi jelenik meg a saját rendszerében: az eredeti tartalom vagy csak olvashatatlan zagyvaság.</p>
+          <h3 id="encryption-title">Kövesd a tartalmat: melyik zár hol nyílik ki?</h3>
+          <p>Ugyanazt a tartalmat többféle zár védheti: külön zár az internetes úton, külön a tároláskor, és külön a beszélgetés résztvevői között. Az első és a negyedik panel üzenetküldést, a középső kettő felhőben tárolt fájlt mutat. A sárga kulcs mellé mindig kiírjuk, pontosan melyik védelem digitális kulcsáról van szó.</p>
         </div>
         <div class="encryption-tabs" role="tablist" aria-label="Titkosítási megoldások">
           ${Object.entries(encryptionModes).map(([key, mode]) => `<button id="encryption-tab-${key}" type="button" role="tab" data-encryption="${key}" aria-controls="encryption-panel" aria-selected="${key === this.active}" tabindex="${key === this.active ? 0 : -1}">${mode.tab}</button>`).join("")}
@@ -310,49 +322,49 @@ class EncryptionLayers extends HTMLElement {
                 <span class="story-avatar story-avatar--person" aria-hidden="true"><i></i><i></i></span>
                 <b>Te</b>
                 <span class="story-message">${item.senderPayload}</span>
-                ${keyBadge("sender", "A kulcs nálad")}
+                ${keyBadge("sender")}
               </article>
               <div class="story-track story-track--first" aria-hidden="true">
                 <i class="story-track-line"></i>
-                <span class="journey-mail"><i></i></span>
-                <b>${item.routeLabel}</b>
+                <span class="journey-mail is-${item.routeKind}"><i></i></span>
+                <b>${item.routeLabels[0]}</b>
               </div>
               <article class="story-actor story-hub ${item.providerReads ? "can-read" : "cannot-read"}">
                 <span class="story-avatar story-avatar--building" aria-hidden="true"><i></i><i></i><i></i></span>
                 <b>${item.hub}</b>
                 <div class="provider-window ${item.providerReads ? "is-readable" : "is-scrambled"}">
-                  <small>A szolgáltató saját rendszerében</small>
+                  <small>Mit lát a szolgáltató?</small>
                   <strong>${item.providerView}</strong>
                   <em>${item.providerViewLabel}</em>
                 </div>
-                ${keyBadge("provider", "Nála van a kulcs") || `<span class="story-no-key"><i aria-hidden="true"></i>Nála nincs kulcs</span>`}
+                ${keyBadge("provider") || `<span class="story-no-key"><i aria-hidden="true"></i>${item.providerNoKey}</span>`}
               </article>
               ${isStorage ? "" : `
                 <div class="story-track story-track--second" aria-hidden="true">
                   <i class="story-track-line"></i>
-                  <span class="journey-mail"><i></i></span>
-                  <b>${item.routeLabel}</b>
+                  <span class="journey-mail is-${item.routeKind}"><i></i></span>
+                  <b>${item.routeLabels[1]}</b>
                 </div>
                 <article class="story-actor story-recipient">
                   <span class="story-avatar story-avatar--person" aria-hidden="true"><i></i><i></i></span>
                   <b>Címzett</b>
                   <span class="story-message recipient-message">Találkozunk 6-kor?</span>
-                  ${keyBadge("recipient", "A kulcs a címzettnél")}
+                  ${keyBadge("recipient")}
                 </article>`}
             </div>
             <div class="story-steps" aria-label="A történet három lépése">
               ${item.steps.map((step, index) => `<div><b>${index + 1}</b><span>${step}</span></div>`).join("")}
             </div>
-            <p class="story-legend"><span class="legend-key"><i aria-hidden="true"></i></span><b>Sárga kulcs:</b> itt olvashatóvá tehető. <span class="legend-service-screen" aria-hidden="true"><i></i></span><b>Szolgáltatói betekintőképernyő:</b> ezt látja a közvetítő vagy a tárhely a saját rendszerében.</p>
+            <p class="story-legend"><span class="legend-key"><i aria-hidden="true"></i></span><b>Sárga kulcs:</b> a felirat megnevezi, melyik védelem feloldásához kell. <span class="legend-service-screen" aria-hidden="true"><i></i></span><b>Szolgáltatói nézet:</b> ezt látja a közvetítő vagy a tárhely a saját rendszerében.</p>
           </div>
           <div class="encryption-copy">
             <p class="mini-label">${item.eyebrow}</p>
             <h4>${item.title}</h4>
             <p>${item.body}</p>
             <div class="service-answer ${item.providerReads ? "is-yes" : "is-no"}">
-              <span>El tudja olvasni a szolgáltató?</span>
+              <span>Hozzáférhet a szolgáltató az eredeti tartalomhoz?</span>
               <strong>${item.providerReads ? "IGEN" : "NEM"}</strong>
-              <small>${item.providerReads ? "Az olvasható tartalom nála is megjelenik." : "Nála csak a lezárt, értelmetlen változat jelenik meg."}</small>
+              <small>${item.providerAnswer}</small>
             </div>
             <div class="plain-facts">
               <article><b>Mire jó?</b><p>${item.protects}</p></article>
@@ -1804,17 +1816,17 @@ document.querySelectorAll("[data-connection-filter]").forEach((button) => {
   });
 });
 
-document.querySelectorAll("[data-flip-card]").forEach((card) => {
+document.querySelectorAll("[data-flip-card], [data-postal-flip]").forEach((card) => {
   card.querySelectorAll("[data-flip]").forEach((button) => button.addEventListener("click", () => {
     const flipped = !card.classList.contains("is-flipped");
     card.classList.toggle("is-flipped", flipped);
-    const front = card.querySelector(".institution-card__front");
-    const back = card.querySelector(".institution-card__back");
+    const front = card.querySelector(".institution-card__front, .postal-card__front");
+    const back = card.querySelector(".institution-card__back, .postal-card__back");
     front.toggleAttribute("inert", flipped);
     back.toggleAttribute("inert", !flipped);
     front.setAttribute("aria-hidden", String(flipped));
     back.setAttribute("aria-hidden", String(!flipped));
-    card.querySelector(".institution-card__front [data-flip]")?.setAttribute("aria-expanded", String(flipped));
+    front.querySelector("[data-flip]")?.setAttribute("aria-expanded", String(flipped));
     requestAnimationFrame(() => (flipped ? back : front).querySelector("[data-flip]")?.focus());
   }));
 });

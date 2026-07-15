@@ -94,6 +94,20 @@ class ChromiumMobileProfileTests(unittest.TestCase):
             f"{label} escapes right",
         )
 
+    @staticmethod
+    def overlap_area(first, second):
+        overlap_width = max(
+            0,
+            min(first["x"] + first["width"], second["x"] + second["width"])
+            - max(first["x"], second["x"]),
+        )
+        overlap_height = max(
+            0,
+            min(first["y"] + first["height"], second["y"] + second["height"])
+            - max(first["y"], second["y"]),
+        )
+        return overlap_width * overlap_height
+
     def assert_not_black_frame(self, path, label):
         with Image.open(path) as image:
             sample = image.convert("L").resize((32, 32))
@@ -245,7 +259,6 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                       const keyCard = story.querySelector('.mail-e2ee-key');
                       keyCard.style.opacity = phase === 'recipient-key' ? '1' : '0';
                       keyCard.style.transform = 'none';
-                      story.querySelector('.mail-e2ee-key-traveller').style.opacity = '0';
                     }""", "no-key")
                     no_key_path = artifact_dir / "04-mail-no-key.jpg"
                     page.locator("mail-story .interactive-card").screenshot(path=str(no_key_path), type="jpeg", quality=58)
@@ -254,14 +267,11 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                       const story = document.querySelector('mail-story');
                       story.querySelector('.mail-e2ee-no-key').style.opacity = '0';
                       story.querySelector('.mail-e2ee-key').style.opacity = '1';
-                      story.querySelector('.mail-object').classList.add('is-open');
-                      story.querySelector('.mail-envelope-flap').style.transform = 'scaleY(-1)';
-                      story.querySelector('.mail-note').style.transform = 'translateY(-76px) rotate(-2deg)';
-                      story.querySelector('.mail-lock').style.opacity = '.3';
                     }""")
                     illustration = page.locator("mail-story .mail-illustration").bounding_box()
                     key_card = page.locator("mail-story .mail-e2ee-key")
-                    self.assert_inside(key_card.bounding_box(), illustration, f"{profile_label}: recipient key card")
+                    key_box = key_card.bounding_box()
+                    self.assert_inside(key_box, illustration, f"{profile_label}: recipient key card")
                     icon_box = key_card.locator(":scope > i").bounding_box()
                     text_box = key_card.locator(":scope > span").bounding_box()
                     self.assertLessEqual(
@@ -270,6 +280,24 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                         f"{profile_label}: key drawing overlaps recipient-key text",
                     )
                     key_clearance = text_box["x"] - (icon_box["x"] + 55)
+                    key_object_overlap = self.overlap_area(
+                        key_box,
+                        page.locator("mail-story .mail-object").bounding_box(),
+                    )
+                    key_postman_overlap = self.overlap_area(
+                        key_box,
+                        page.locator("mail-story .mail-postman").bounding_box(),
+                    )
+                    self.assertLessEqual(
+                        key_object_overlap,
+                        1,
+                        f"{profile_label}: recipient-key card covers locked envelope",
+                    )
+                    self.assertLessEqual(
+                        key_postman_overlap,
+                        1,
+                        f"{profile_label}: recipient-key card covers postman",
+                    )
                     mail_path = artifact_dir / "05-mail-recipient-key.jpg"
                     page.locator("mail-story .interactive-card").screenshot(path=str(mail_path), type="jpeg", quality=58)
                     screenshot_paths["mail_recipient_key"] = str(mail_path.relative_to(ROOT))
@@ -456,6 +484,7 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     screenshot_paths["safeguards"] = str(safeguard_path.relative_to(ROOT))
 
                     readable_selector = ",".join((
+                        ".postal-card p",
                         ".mail-e2ee-no-key b", ".mail-e2ee-no-key span", ".mail-e2ee-key b",
                         ".mail-e2ee-key small", ".mail-key-comparison span", ".mail-key-comparison small",
                         ".rate-derived small", ".rare-count > span", "footer p",
@@ -506,6 +535,8 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                             "horizontal_overflow_px": overflow,
                             "minimum_action_copy_to_button_gap_px": min(action_gaps),
                             "recipient_key_clearance_px": round(key_clearance, 2),
+                            "recipient_key_object_overlap_px2": round(key_object_overlap, 2),
+                            "recipient_key_postman_overlap_px2": round(key_postman_overlap, 2),
                             "minimum_encryption_story_edge_margin_px": min(encryption_label_margins),
                             "minimum_readable_helper_font_px": min(readable_sizes),
                             "minimum_diagram_label_font_px": min(diagram_sizes),

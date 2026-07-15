@@ -28,6 +28,12 @@ TARGETS = {
         "default_workers": 5,
         "maximum_shards": 5,
     },
+    "firefox": {
+        "module": "tests.test_firefox_profiles",
+        "artifact_dir": ROOT / "test-artifacts" / "firefox",
+        "default_workers": 5,
+        "maximum_shards": 5,
+    },
 }
 
 
@@ -180,12 +186,12 @@ def run_target(target: str, requested_workers: int | None) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("target", choices=("mobile", "desktop", "all"), nargs="?", default="all")
+    parser.add_argument("target", choices=(*TARGETS, "all"), nargs="?", default="all")
     parser.add_argument(
         "--workers",
         type=int,
         default=None,
-        help="maximum isolated Chromium processes per suite (default: 8 mobile, 5 desktop)",
+        help="maximum isolated browser processes per suite (default: 8 mobile, 5 desktop, 5 Firefox)",
     )
     args = parser.parse_args()
     if args.workers is not None and args.workers < 1:
