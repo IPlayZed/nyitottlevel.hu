@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'none'; connect-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'"
+    />
+    <meta
+      name="description"
+      content="Közérthető, interaktív magyar útmutató az EU Chat Control 1.0 és 2.0 javaslatairól, a szavazásokról, a titkosításról és az alapjogi kockázatokról."
+    />
+    <meta name="theme-color" content="#f7f3e9" />
+    <meta property="og:title" content="Felbontanád mindenki levelét? — Chat Control közérthetően" />
+    <meta
+      property="og:description"
+      content="Interaktív történet arról, mit akar megoldani az EU, és milyen kockázatokkal járhat a választott eszköz."
+    />
+    <meta property="og:url" content="https://iplayzed.github.io/nyitottlevel.hu/" />
+    <title>Felbontanád mindenki levelét? — Chat Control közérthetően</title>
+    <link rel="canonical" href="https://iplayzed.github.io/nyitottlevel.hu/" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="vote-data.js" defer></script>
+    <script src="quiz-data.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#tartalom">Ugrás a tartalomhoz</a>
+
+    <div class="reading-progress" aria-hidden="true">
+      <span id="readingProgress"></span>
+    </div>
+
+    <header class="site-header" id="top">
+      <a class="brand" href="#top" aria-label="Vissza az oldal tetejére">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="brand-envelope"></span>
+          <span class="brand-eye"></span>
+        </span>
+        <span>
+          <strong>Nyitott Levél</strong>
+          <small>Chat Control közérthetően</small>
+        </span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Fő navigáció">
+        <a class="nav-direct" href="#gyakori-tevhitek">GYIK</a>
+        <div class="nav-group">
+          <a href="#mi-ez">Mi ez?<span class="nav-chevron" aria-hidden="true">⌄</span></a>
+          <div class="nav-submenu" aria-label="Mi ez? alcímek">
+            <a href="#posta">Levéltörténet</a>
+            <a href="#mi-ez">Az 1.0 és a 2.0</a>
+            <a href="#intezmenyek">Ki dönt erről?</a>
+          </div>
+        </div>
+        <div class="nav-group">
+          <a href="#hogyan-mukodik">Hogyan működik?<span class="nav-chevron" aria-hidden="true">⌄</span></a>
+          <div class="nav-submenu" aria-label="Hogyan működik? alcímek">
+            <a href="#hogyan-mukodik">Felismerési módok</a>
+            <a href="#kockazatok">Kinek árthat?</a>
+            <a href="#tomeges-megfigyeles">Tömeges megfigyelés</a>
+            <a href="#visszaeles">Visszaélési lehetőségek</a>
+          </div>
+        </div>
+        <div class="nav-group">
+          <a href="#szavazas">Szavazások<span class="nav-chevron" aria-hidden="true">⌄</span></a>
+          <div class="nav-submenu" aria-label="Szavazások alcímek">
+            <a href="#szavazas">Időrend és szavazatok</a>
+            <a href="#merleg">Az érvek mérlege</a>
+          </div>
+        </div>
+        <div class="nav-group">
+          <a href="#mit-tehetsz">Mit tehetsz?<span class="nav-chevron" aria-hidden="true">⌄</span></a>
+          <div class="nav-submenu nav-submenu--right" aria-label="Mit tehetsz? alcímek">
+            <a href="#mit-tehetsz">Cselekvési lehetőségek</a>
+            <a href="#kapcsolodas">Szervezetek és közösségek</a>
+            <a href="#forrasok">Források</a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="header-actions">
+        <button class="quiet-button" id="motionToggle" type="button" aria-pressed="false">
+          <span class="motion-icon" aria-hidden="true">Ⅱ</span>
+          <span class="button-label">Animációk leállítása</span>
+        </button>
+        <button class="menu-button" id="menuButton" type="button" aria-expanded="false" aria-controls="mobileNav">
+          <span></span><span></span><span></span>
+          <span class="sr-only">Menü megnyitása</span>
+        </button>
+      </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobileNav" aria-label="Mobil navigáció" hidden>
+      <a class="mobile-nav__shortcut" href="#gyakori-tevhitek"><strong>GYIK</strong><span>Kérdések és tévhitek, röviden</span></a>
+      <div class="mobile-nav__group">
+        <a class="mobile-nav__parent" href="#mi-ez">Mi ez?</a>
+        <a href="#posta">Levéltörténet</a><a href="#mi-ez">Az 1.0 és a 2.0</a><a href="#intezmenyek">Ki dönt erről?</a>
+      </div>
+      <div class="mobile-nav__group">
+        <a class="mobile-nav__parent" href="#hogyan-mukodik">Hogyan működik?</a>
+        <a href="#hogyan-mukodik">Felismerési módok</a><a href="#kockazatok">Kinek árthat?</a><a href="#tomeges-megfigyeles">Tömeges megfigyelés</a><a href="#visszaeles">Visszaélési lehetőségek</a>
+      </div>
+      <div class="mobile-nav__group">
+        <a class="mobile-nav__parent" href="#szavazas">Szavazások</a>
+        <a href="#szavazas">Időrend és szavazatok</a><a href="#merleg">Az érvek mérlege</a>
+      </div>
+      <div class="mobile-nav__group">
+        <a class="mobile-nav__parent" href="#mit-tehetsz">Mit tehetsz?</a>
+        <a href="#mit-tehetsz">Cselekvési lehetőségek</a><a href="#kapcsolodas">Szervezetek és közösségek</a><a href="#forrasok">Források</a>
+      </div>
+    </nav>
+
+    <main id="tartalom">
+      <section class="hero story-section" data-chapter="0" aria-labelledby="hero-title">
+        <div class="hero-copy reveal">
+          <p class="eyebrow"><span></span> Interaktív útmutató · gyors áttekintés és részletes példák</p>
+          <h1 id="hero-title">Felbontanád <em>mindenki</em> levelét, hogy megtaláld közöttük a bűncselekmények nyomait?</h1>
+          <p class="hero-lead">
+            Az EU valódi, súlyos problémát akar megoldani: a gyermekek online szexuális bántalmazását.
+            A vita arról szól, hogy ehhez át kell-e világítani emberek millióinak magánüzeneteit.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#posta">
+              Induljunk a postánál
+              <span aria-hidden="true">↓</span>
+            </a>
+            <button class="secondary-button" type="button" data-open-status>
+              Mi a helyzet most?
+            </button>
+          </div>
+          <p class="trust-note">
+            <span aria-hidden="true">✓</span>
+            Tényalapú · elsődleges EU-forrásokkal · frissítve: 2026. július 14.
+          </p>
+        </div>
+
+        <div class="hero-visual reveal" aria-label="Animált illusztráció egy lezárt levélről és egy átvilágító kapuról">
+          <div class="post-office" aria-hidden="true">
+            <div class="sun-orbit"><span></span></div>
+            <div class="cloud cloud-one"></div>
+            <div class="cloud cloud-two"></div>
+            <div class="scanner-gate">
+              <span class="scanner-light"></span>
+              <span class="scanner-label">ELLENŐRZÉS</span>
+            </div>
+            <div class="moving-letter">
+              <span class="letter-sheet"><b>Magánüzenet</b><i></i><i></i></span>
+              <span class="letter-flap"></span>
+              <span class="letter-pocket"></span>
+              <span class="letter-heart">♥</span>
+            </div>
+            <div class="postman hero-postman" aria-hidden="true">
+              <span class="postman-head"></span><span class="postman-cap"></span><span class="postman-body"></span>
+              <span class="postman-strap"></span>
+              <span class="postman-arm postman-arm--front"><i class="postman-hand"></i></span><span class="postman-arm postman-arm--back"><i class="postman-hand"></i></span>
+              <span class="postman-leg postman-leg--front"></span><span class="postman-leg postman-leg--back"></span>
+              <span class="postman-bag postman-satchel"></span>
+            </div>
+            <div class="belt"><span></span><span></span><span></span></div>
+            <div class="speech-cloud">
+              „Csak a rossz leveleket keressük.”
+              <small>De ehhez melyik levelet kell megnézni?</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="scroll-cue" aria-hidden="true"><span></span> Görgess tovább</div>
+      </section>
+
+      <section class="status-strip" aria-label="Jelenlegi jogi helyzet">
+        <div>
+          <span class="status-dot status-dot--off"></span>
+          <strong>1.0: jelenleg lejárt</strong>
+          <span>A 2026. júliusi módosítás még nem hatályos törvény.</span>
+        </div>
+        <div>
+          <span class="status-dot status-dot--pending"></span>
+          <strong>2.0: még tárgyalják</strong>
+          <span>Nincs végleges szöveg, nincs elfogadott állandó rendszer.</span>
+        </div>
+      </section>
+
+      <section class="misconceptions-section story-section" id="gyakori-tevhitek" aria-labelledby="misconceptions-title">
+        <div class="misconceptions-heading reveal">
+          <div>
+            <p class="chapter-number">Gyors tájékozódás · 4 gyakori állítás</p>
+            <h2 id="misconceptions-title">Gyakori kérdések és tévhitek, rövid válaszokkal</h2>
+          </div>
+          <p>
+            Ezek a gyakran ismételt állítások elsőre hihetőnek tűnhetnek, de fontos részleteket hagynak ki.
+            Minden kártyán megtalálod a rövid választ, az indoklást és az ellenőrizhető forrásokat.
+          </p>
+        </div>
+
+        <div class="misconception-grid">
+          <article class="misconception-card misconception-card--privacy reveal" id="nincs-mit-rejtegetnem">
+            <header>
+              <span class="misconception-number" aria-hidden="true">01</span>
+              <a class="section-anchor" href="#nincs-mit-rejtegetnem" aria-label="A Nincs mit rejtegetnem állítás közvetlen hivatkozása">#</a>
+            </header>
+            <p class="misconception-label">Gyakori állítás</p>
+            <h3>„Nincs mit rejtegetnem.”</h3>
+            <p class="misconception-answer"><strong>Röviden:</strong> a magánszféra nem a bűnösség jele.</p>
+            <p>
+              Orvosi leletet, családi vitát vagy munkahelyi beszélgetést akkor sem szeretnél idegenek elé tárni,
+              ha teljesen jogszerű. A magánélet és a kapcsolattartás védelme mindenkit megillet, nemcsak azt, akit
+              bűncselekménnyel gyanúsítanak.
+            </p>
+            <div class="misconception-sources">
+              <a href="https://eur-lex.europa.eu/legal-content/HU/TXT/?uri=CELEX:12016P/TXT" target="_blank" rel="noopener noreferrer">EU Alapjogi Charta, 7–8. cikk <span aria-hidden="true">↗</span></a>
+            </div>
+          </article>
+
+          <article class="misconception-card misconception-card--scope reveal" id="csak-bunozoket-erint">
+            <header>
+              <span class="misconception-number" aria-hidden="true">02</span>
+              <a class="section-anchor" href="#csak-bunozoket-erint" aria-label="A Csak a bűnözőket érinti állítás közvetlen hivatkozása">#</a>
+            </header>
+            <p class="misconception-label">Gyakori állítás</p>
+            <h3>„Csak a bűnözőket érinti.”</h3>
+            <p class="misconception-answer"><strong>Röviden:</strong> az ellenőrzés előtt még nem tudni, melyik üzenet jogellenes.</p>
+            <p>
+              A Bizottság javaslata szerint a felderítési végzés egy meghatározott szolgáltatásra és
+              kockázattípusra szólna. Az ellenőrzés mégis az érintett felhasználók jogszerű üzeneteit is
+              automatikusan átvizsgálná, és a javaslat maga is számol téves jelzésekkel. A „célzott végzés” tehát
+              nem jelenti azt, hogy csak bűnözők adatai kerülnek a rendszerbe.
+            </p>
+            <div class="misconception-sources">
+              <a href="https://eur-lex.europa.eu/legal-content/HU/TXT/?uri=CELEX:52022PC0209" target="_blank" rel="noopener noreferrer">A Bizottság 2022-es javaslata <span aria-hidden="true">↗</span></a>
+              <a href="https://www.edpb.europa.eu/documents/legislative-opinion/edpb-edps-joint-opinion-042022-on-the-proposal-for-a-regulation-of_en" target="_blank" rel="noopener noreferrer">EDPB–EDPS közös vélemény <span aria-hidden="true">↗</span></a>
+            </div>
+          </article>
+
+          <article class="misconception-card misconception-card--provider reveal" id="minden-uzenetet-olvasnak">
+            <header>
+              <span class="misconception-number" aria-hidden="true">03</span>
+              <a class="section-anchor" href="#minden-uzenetet-olvasnak" aria-label="A Szolgáltatók minden üzenetet olvasnak állítás közvetlen hivatkozása">#</a>
+            </header>
+            <p class="misconception-label">Gyakori állítás</p>
+            <h3>„A szolgáltatók már most is minden üzenetet olvasnak.”</h3>
+            <p class="misconception-answer"><strong>Röviden:</strong> nem minden szolgáltató fér hozzá minden üzenethez, és az ellenőrzés módja sem mindenhol azonos.</p>
+            <p>
+              Egyes szolgáltatók bizonyos üzenetek olvasható tartalmához hozzáférnek vagy automatikusan
+              meghatározott mintákat keresnek bennük. Jól megvalósított végpontok közötti titkosításnál viszont
+              nincs náluk a tartalom feloldásához szükséges kulcs. Az ideiglenes uniós szabály csak azt tette
+              lehetővé, hogy egyes szolgáltatók saját döntésük alapján meghatározott ellenőrzéseket végezzenek —
+              nem azt, hogy minden üzenetet ember olvasson.
+            </p>
+            <div class="misconception-sources">
+              <a href="https://eur-lex.europa.eu/legal-content/HU/TXT/?uri=CELEX:32021R1232" target="_blank" rel="noopener noreferrer">Az ideiglenes rendelet magyarul <span aria-hidden="true">↗</span></a>
+              <a href="https://www.edps.europa.eu/data-protection/our-work/subjects/encryption_en" target="_blank" rel="noopener noreferrer">EDPS: mit jelent a végpontok közötti titkosítás? <span aria-hidden="true">↗</span></a>
+              <a href="#posta">Mit jelent a végpontok közötti titkosítás? <span aria-hidden="true">↓</span></a>
+            </div>
+          </article>
+
+          <article class="misconception-card misconception-card--math reveal" id="titkositas-betiltasa">
+            <header>
+              <span class="misconception-number" aria-hidden="true">04</span>
+              <a class="section-anchor" href="#titkositas-betiltasa" aria-label="A Titkosítás betiltása állítás közvetlen hivatkozása">#</a>
+            </header>
+            <p class="misconception-label">Gyakori állítás</p>
+            <h3>„A titkosítást — vagy akár a matematikát — egyszerűen be lehet tiltani.”</h3>
+            <p class="misconception-answer"><strong>Röviden:</strong> a jog korlátozhatja a titkosítás használatát és az azt kínáló szolgáltatásokat, de maga a technikai módszer ettől nem tűnik el.</p>
+            <p>
+              Egy állam jogilag korlátozhatja a titkosítás használatát és az azt kínáló szolgáltatásokat, de ettől
+              maga a titkosítás technikai lehetősége nem tűnik el. Az ENISA szerint nehéz jogszabállyal korlátozni
+              a műszaki innovációt, a bűnözők pedig saját titkosító eszközöket fejleszthetnek és használhatnak. A
+              titkosítás szándékos gyengítése eközben a jogszerű felhasználókat is veszélyezteti.
+            </p>
+            <div class="misconception-sources">
+              <a href="https://www.enisa.europa.eu/news/enisa-news/the-importance-of-cryptography-for-the-digital-society" target="_blank" rel="noopener noreferrer">ENISA: a titkosítás jelentősége <span aria-hidden="true">↗</span></a>
+            </div>
+          </article>
+        </div>
+
+        <p class="misconceptions-next reveal">
+          <strong>Innen részletesebben folytatjuk:</strong> előbb megmutatjuk, mit jelent egy üzenet lezárása,
+          majd különválasztjuk a már lejárt ideiglenes szabályt és a még tárgyalt állandó javaslatot.
+          <a href="#posta">Tovább a levéltörténethez <span aria-hidden="true">↓</span></a>
+        </p>
+      </section>
+
+      <section class="chapter story-section paper-section" id="posta" data-chapter="1" aria-labelledby="posta-title">
+        <div class="chapter-heading reveal">
+          <p class="chapter-number">01 · A lezárt levél</p>
+          <h2 id="posta-title">Először értsük meg, mi történik egy üzenettel</h2>
+          <p>
+            Nem kell tudnod, mi az az algoritmus vagy a szerver. Képzeld el úgy, mintha levelet adnál fel.
+          </p>
+        </div>
+
+        <mail-story class="reveal"></mail-story>
+
+        <aside class="plain-language reveal">
+          <span class="plain-language__icon" aria-hidden="true">i</span>
+          <div>
+            <strong>Egyszerűen:</strong>
+            <p>
+              A <b>végpontok közötti titkosítás</b> olyan, mint egy doboz, amelyet csak te és a címzett tudtok
+              kinyitni. Ha a szolgáltató ellenőrizni akarja a tartalmát, akkor vagy kulcsot kell kapnia, vagy a
+              levelet még lezárás előtt kell megnéznie.
+            </p>
+          </div>
+        </aside>
+
+        <encryption-layers class="reveal"></encryption-layers>
+      </section>
+
+      <section class="chapter story-section" id="mi-ez" data-chapter="2" aria-labelledby="mi-ez-title">
+        <div class="chapter-heading reveal">
+          <p class="chapter-number">02 · Két külön történet</p>
+          <h2 id="mi-ez-title">„Chat Control” néven valójában két dolgot emlegetnek</h2>
+          <p>
+            Az egyik egy lejárt ideiglenes kivétel. A másik egy készülő állandó szabályrendszer. Kattints, és
+            hasonlítsd össze őket.
+          </p>
+        </div>
+
+        <version-switcher class="reveal"></version-switcher>
+
+        <div class="fact-callout reveal">
+          <span class="fact-callout__stamp" aria-hidden="true">FONTOS</span>
+          <p>
+            <b>Az 1.0 sem volt ártalmatlan csak azért, mert „önkéntes” és főként szolgáltató által olvasható üzeneteket érintett.</b>
+            A választás a szolgáltatóé volt, nem a felhasználóé: a végpontok közötti titkosítást (E2EE) nem használó magánüzenetek tartalma ugyanúgy bizalmas, az általános vizsgálatuk pedig ugyanúgy alapjogi beavatkozás. Jelenleg az 1.0 lejárt, a 2.0 pedig még nem végleges.
+          </p>
+        </div>
+      </section>
+
+      <section class="chapter story-section institution-section" id="intezmenyek" data-chapter="3" aria-labelledby="intezmenyek-title">
+        <div class="chapter-heading chapter-heading--split reveal">
+          <p class="chapter-number">03 · Ki dönt erről?</p>
+          <h2 id="intezmenyek-title">Az EU nem egyetlen nagy iroda</h2>
+          <p>Három uniós intézmény alakítja a végeredményt. Ugyanabból a javaslatból egészen eltérő intézményi álláspontok születhetnek.</p>
+        </div>
+
+        <div class="institution-path reveal" aria-label="Az uniós jogalkotás egyszerűsített útja">
+          <article class="institution-card institution-card--commission" data-flip-card>
+            <div class="institution-card__inner">
+              <div class="institution-card__face institution-card__front">
+                <span class="institution-card__number">1</span>
+                <div class="institution-icon" aria-hidden="true">✎</div>
+                <h3>Európai Bizottság</h3>
+                <p>Megírja a kiinduló jogszabályjavaslatot.</p>
+                <button type="button" data-flip aria-expanded="false">Mit javasolt? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="institution-card__face institution-card__back" aria-hidden="true" inert>
+                <p class="mini-label">A 2022-es javaslat</p>
+                <h3>Állandó uniós keret</h3>
+                <p>Kockázatértékelést, megelőzést, hatósági felderítési végzést, bejelentést és eltávolítást javasolt. A szöveg titkosított szolgáltatásokra is kiterjedhetett volna.</p>
+                <button type="button" data-flip>Vissza az elejére <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+          <span class="path-arrow" aria-hidden="true">→</span>
+          <article class="institution-card institution-card--parliament" data-flip-card>
+            <div class="institution-card__inner">
+              <div class="institution-card__face institution-card__front">
+                <span class="institution-card__number">2</span>
+                <div class="institution-icon" aria-hidden="true">♙</div>
+                <h3>Európai Parlament</h3>
+                <p>A közvetlenül választott képviselők álláspontját alakítja ki.</p>
+                <button type="button" data-flip aria-expanded="false">Mit változtatott? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="institution-card__face institution-card__back" aria-hidden="true" inert>
+                <p class="mini-label">A parlamenti álláspont</p>
+                <h3>Célzottabb végzések</h3>
+                <p>A Parlament erősebb titkosításvédelmet kért. 2026. július 9-én az ideiglenes szabálynál a végpontok között titkosított kommunikáció kizárását támogatta.</p>
+                <button type="button" data-flip>Vissza az elejére <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+          <span class="path-arrow" aria-hidden="true">↔</span>
+          <article class="institution-card institution-card--council" data-flip-card>
+            <div class="institution-card__inner">
+              <div class="institution-card__face institution-card__front">
+                <span class="institution-card__number">3</span>
+                <div class="institution-icon" aria-hidden="true">⚑</div>
+                <h3>Az Európai Unió Tanácsa</h3>
+                <p>A tagállami miniszterek a kormányaikat képviselik.</p>
+                <button type="button" data-flip aria-expanded="false">Hol tart? <span aria-hidden="true">↻</span></button>
+              </div>
+              <div class="institution-card__face institution-card__back" aria-hidden="true" inert>
+                <p class="mini-label">A tagállamok álláspontja</p>
+                <h3>Most közös szöveget egyeztetnek</h3>
+                <p>A kormányok 2025 novemberében jutottak közös 2.0-álláspontra. A felderítési kötelezettségről még nincs teljes egyezség; az 1.0-nál reagálniuk kell a Parlament módosításaira.</p>
+                <button type="button" data-flip>Vissza az elejére <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+          </article>
+        </div>
+        <p class="flip-hint reveal"><span aria-hidden="true">↻</span> Fordítsd meg mindhárom kártyát. A Bizottság javasol, a Parlament és a Tanács külön álláspontot alakít ki, majd közös szöveget egyeztetnek. Ezt nevezik trilógusnak: a két jogalkotó a Bizottság részvételével keres kompromisszumot, amelyet végül mindkettőnek jóvá kell hagynia.</p>
+      </section>
+
+      <section class="chapter story-section dark-section" id="hogyan-mukodik" data-chapter="4" aria-labelledby="hogyan-title">
+        <div class="chapter-heading chapter-heading--light reveal">
+          <p class="chapter-number">04 · A válogatógép</p>
+          <h2 id="hogyan-title">Nem minden „felismerés” ugyanaz</h2>
+          <p>
+            Egy már ismert tiltott kép másolatának megtalálása sokkal egyszerűbb, mint eldönteni egy új képről vagy
+            beszélgetésről, hogy bűncselekmény-e.
+          </p>
+        </div>
+
+        <detection-lab class="reveal"></detection-lab>
+      </section>
+
+      <section class="chapter story-section" id="kockazatok" data-chapter="5" aria-labelledby="kockazat-title">
+        <div class="chapter-heading reveal">
+          <p class="chapter-number">05 · Nemcsak „mások” üzenetei</p>
+          <h2 id="kockazat-title">Kit érinthet egy téves riasztás vagy a titkosítás gyengülése?</h2>
+          <p>Válassz egy hétköznapi helyzetet. Mindegyikben törvényes, érzékeny beszélgetés zajlik.</p>
+        </div>
+
+        <privacy-room class="reveal"></privacy-room>
+
+        <div class="private-talks reveal" aria-labelledby="private-talks-title">
+          <div class="private-talks__intro">
+            <p class="chapter-number">A nappalitól a felhőig</p>
+            <h3 id="private-talks-title">A magánbeszélgetés attól még nem nyilvános, hogy digitális eszköz közvetíti</h3>
+            <p>Nemcsak képekről van szó. A családi, egészségügyi, munkahelyi és politikai beszélgetésekből szolgáltató, munkáltató vagy állam is következtethet az életünkre — attól függően, hol olvasható a tartalom és ki fér hozzá.</p>
+          </div>
+          <div class="private-talks__grid">
+            <article><span aria-hidden="true">⌂</span><h4>Otthoni családi ügy</h4><p>Egy nem E2EE családi csoportban betegségről, párkapcsolati válságról vagy pénzügyi gondról beszéltek. Ha a szolgáltató olvashatja a tartalmat, technikailag vizsgálni vagy kiadni is képes lehet.</p></article>
+            <article><span aria-hidden="true">▦</span><h4>Munka és vállalati rendszer</h4><p>A céges üzenet, automatikus leirat vagy felhőben tárolt beszélgetés hozzáférési szabályait a munkáltató és a szolgáltató rendszere határozza meg. A titkosított adatátvitel ettől még nem rejti el előlük a tartalmat.</p></article>
+            <article><span aria-hidden="true">§</span><h4>Állami hozzáférés</h4><p>Ha a szolgáltatónál olvasható üzenet van, vagy nála van a tartalom feloldásához szükséges kulcs, jogi kötelezés, visszaélés vagy rendszerfeltörés útján a tartalom kikerülhet. Az E2EE éppen ezt a központi hozzáférési pontot szűkíti.</p></article>
+            <article><span aria-hidden="true">◉</span><h4>Otthoni hang és okoseszköz</h4><p>A Chat Control 1.0 nem terjedt ki hanghívásokra, és ez a javaslat nem jelent automatikus mikrofonbekapcsolást. A példa azt mutatja: egy hangasszisztens, leirat vagy felhőbe küldött felvétel esetén ismét az számít, hol készül olvasható másolat.</p></article>
+          </div>
+        </div>
+
+        <div class="risk-grid reveal">
+          <article>
+            <span>01</span>
+            <h3>Téves találat</h3>
+            <p>Ártatlan kép vagy mondat kerülhet emberi ellenőr elé, a fiók pedig letiltható.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Új támadási felület</h3>
+            <p>A telefonba épített ellenőrző képességet bűnöző vagy elnyomó állam is megpróbálhatja eltéríteni.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>A cél későbbi kiterjesztése</h3>
+            <p>Ha a gép már minden üzenetet vizsgálni tud, később más tartalmat is kereshetnek vele.</p>
+          </article>
+          <article>
+            <span>04</span>
+            <h3>Kikerülhető rendszer</h3>
+            <p>A felkészült elkövető külön titkosíthat, miközben továbbra is a hétköznapi felhasználók üzeneteit vizsgálják át.</p>
+          </article>
+        </div>
+
+        <div class="surveillance-intro reveal" id="tomeges-megfigyeles">
+          <p class="chapter-number">05/A · Célzott vagy tömeges?</p>
+          <h2>Nem az a kérdés, hogy ember olvas-e el minden üzenetet</h2>
+          <p>A vizsgálat széles hatókörét nem szűkíti le az, hogy először gép végzi. A döntő különbség az, hogy előre meghatározott, konkrét célpontot vizsgálnak-e, vagy egy teljes vagy nagyon széles felhasználói kör kommunikációját dolgozzák fel, és csak utána választják ki, kit nézzenek meg közelebbről.</p>
+        </div>
+        <surveillance-contrast class="reveal"></surveillance-contrast>
+
+        <div class="abuse-intro reveal" id="visszaeles">
+          <p class="chapter-number">05/B · Politikai visszaélési lehetőség</p>
+          <h2>Mi történik, ha később más kerül a keresőlistára?</h2>
+          <p>Ez nem jóslat arról, hogy a javaslatot biztosan politikai megfigyelésre használják. A kérdés az, mire lenne alkalmas a létrejövő ellenőrzési képesség, ha egyszer kevésbé tisztességes döntéshozó kezébe kerülne.</p>
+        </div>
+        <abuse-simulator class="reveal"></abuse-simulator>
+        <div class="history-intro reveal">
+          <p class="chapter-number">Dokumentált előzmények</p>
+          <h2>Korábbi visszaélések: nem jóslat, hanem stresszteszt</h2>
+          <p>Ezek az esetek nem bizonyítják, hogy a Chat Control-javaslatot már politikai megfigyelésre használták, és nem állítják, hogy ez biztosan megtörténne. Azt mutatják meg, hogyan változhat meg egy ellenőrzési képesség célpontja, felhasználója vagy következménye.</p>
+        </div>
+        <abuse-history class="reveal"></abuse-history>
+      </section>
+
+      <section class="chapter story-section vote-section" id="szavazas" data-chapter="6" aria-labelledby="szavazas-title">
+        <div class="chapter-heading reveal">
+          <p class="chapter-number">06 · A számok mögött</p>
+          <h2 id="szavazas-title">Öt külön szavazás, két külön jogszabályi történet</h2>
+          <p>Az oldalon szereplő számok nem ugyanarról a kérdésről szólnak. Előbb nézd meg az időrendet és azt, hogy az adott szavazásban pontosan mit jelentett az igen vagy a nem.</p>
+        </div>
+
+        <div class="vote-chronology reveal" aria-labelledby="vote-chronology-title">
+          <div class="vote-chronology__intro">
+            <p class="mini-label">Előbb az időrend</p>
+            <h3 id="vote-chronology-title">Mi történt, és melyik „Chat Controlról” döntöttek?</h3>
+            <p><b>1.0</b> az ideiglenes, szolgáltatói önkéntes vizsgálatot lehetővé tevő kivétel. <b>2.0</b> a külön, állandó rendelettervezet. Egy bizottsági szavazás pedig nem ugyanaz, mint a teljes Parlament döntése.</p>
+          </div>
+          <ol>
+            <li><time>2021. júl. 6.</time><span class="vote-law is-one">1.0</span><div><b>Az eredeti ideiglenes kivétel</b><p>A teljes Parlament elfogadta, hogy a szolgáltatók meghatározott feltételekkel önként vizsgálhassanak tartalmat.</p></div></li>
+            <li><time>2023. nov. 14.</time><span class="vote-law is-two">2.0</span><div><b>LIBE szakbizottsági álláspont</b><p>A parlamenti szakbizottság a tartós javaslat módosított jelentéséről döntött. Ez nem volt végleges plenáris törvényszavazás.</p></div></li>
+            <li><time>2024. ápr. 10.</time><span class="vote-law is-one">1.0</span><div><b>Az első hosszabbítás</b><p>A teljes Parlament 2026. április 3-ig meghosszabbította az ideiglenes kivételt.</p></div></li>
+            <li><time>2026. márc. 26.</time><span class="vote-law is-one">1.0</span><div><b>Újabb hosszabbítás elutasítva</b><p>A Bizottság következő hosszabbítási javaslata 228–311 arányban elbukott.</p></div></li>
+            <li><time>2026. júl. 9.</time><span class="vote-law is-one">1.0</span><div><b>Az 1.0 visszahozásának második parlamenti köre</b><p>Az 1.0 áprilisban lejárt. A Tanács olyan szöveget küldött a Parlamentnek, amely újra lehetővé tenné az ideiglenes vizsgálatot. A szöveg elutasítására 314-en szavaztak, de ehhez az összes hivatalban lévő képviselő abszolút többsége, 360 igen kellett. A Parlament ezután módosította a szöveget.</p></div></li>
+          </ol>
+          <p class="vote-current-marker"><b>Most itt tartunk:</b> a Tanácsnak el kell fogadnia a Parlament módosításait, vagy a két intézmény egyeztetést kezd.</p>
+        </div>
+
+        <vote-explorer class="reveal"></vote-explorer>
+
+        <div class="vote-threshold-intro reveal">
+          <p class="mini-label">Most nagyítsuk ki az utolsó lépést</p>
+          <h3>Miért nem volt elég a 314–276-os többség?</h3>
+          <p>Ez az ábra kizárólag a 2026. július 9-i elutasítási indítvány küszöbét magyarázza. Az abszolút többség itt nem a leadott szavazatok többségét, hanem az összes hivatalban lévő képviselő több mint felét jelenti. Az igen ebben a szavazásban a Tanács szövegének elutasítását jelentette.</p>
+        </div>
+        <vote-simulator class="reveal"></vote-simulator>
+      </section>
+
+      <section class="chapter story-section balance-section" id="merleg" data-chapter="7" aria-labelledby="merleg-title">
+        <div class="chapter-heading reveal">
+          <p class="chapter-number">07 · A mérleg két serpenyője</p>
+          <h2 id="merleg-title">A cél fontos. Az eszközt mégis meg kell vizsgálni.</h2>
+          <p>A gyermekvédelem és a magánélet nem egymás ellenségei. A jó szabály mindkettőt erősíti.</p>
+        </div>
+
+        <div class="balance-board reveal">
+          <article class="balance-side balance-side--benefit">
+            <div class="balance-icon" aria-hidden="true">♥</div>
+            <h3>A kitűzött gyermekvédelmi célok</h3>
+            <ul>
+              <li>Ismert bántalmazási felvételek újbóli terjedésének megállítása</li>
+              <li>Veszélyben lévő gyermekek és elkövetők azonosítása</li>
+              <li>Gyorsabb eltávolítás, egységesebb határon átnyúló eljárás</li>
+              <li>Biztonságosabb alapbeállítások és jobb bejelentő eszközök</li>
+            </ul>
+          </article>
+          <div class="balance-pivot" aria-hidden="true"><span></span></div>
+          <article class="balance-side balance-side--risk">
+            <div class="balance-icon" aria-hidden="true">!</div>
+            <h3>A felmerülő alapjogi és biztonsági kockázatok</h3>
+            <ul>
+              <li>Ártatlan emberek kommunikációjának általános vizsgálata</li>
+              <li>A végpontok közötti titkosítás biztonsági ígéretének gyengítése</li>
+              <li>Gépi tévedések, érzékeny adatok kiszivárgása, jogorvoslati nehézségek</li>
+              <li>Egy később más célra is átállítható ellenőrző infrastruktúra</li>
+            </ul>
+          </article>
+        </div>
+
+        <safeguard-builder class="reveal"></safeguard-builder>
+
+        <myth-quiz class="reveal"></myth-quiz>
+      </section>
+
+      <section class="chapter story-section action-section" id="mit-tehetsz" data-chapter="8" aria-labelledby="action-title">
+        <div class="action-intro reveal">
+          <p class="chapter-number">08 · Most már látod az egészet</p>
+          <h2 id="action-title">A magánlevél nem gyanús tárgy</h2>
+          <p>
+            A gyermekek hatékony védelmét lehet úgy követelni, hogy közben ne épüljön ki minden ember magánüzeneteinek
+            általános ellenőrzésére alkalmas rendszer.
+          </p>
+        </div>
+
+        <div class="action-grid reveal">
+          <article>
+            <span class="action-number">1</span>
+            <h3>Ismerd fel a pontos állítást</h3>
+            <p>Ne oszd tovább azt, hogy „már mindent olvasnak”. A valós helyzet árnyaltabb — és ettől nem kevésbé fontos.</p>
+            <button class="card-button" type="button" data-copy-summary>Másolható rövid összefoglaló</button>
+          </article>
+          <article>
+            <span class="action-number">2</span>
+            <h3>Írj a döntéshozóknak</h3>
+            <p>Kérj célzott bírói engedélyt, a végpontok közötti titkosítás egyértelmű védelmét és független technológiai auditot.</p>
+            <button class="card-button" type="button" data-open-letter>Levélminta megnyitása</button>
+          </article>
+          <article>
+            <span class="action-number">3</span>
+            <h3>Mutasd meg másnak is</h3>
+            <p>A jogszerű, békés nyilvánosság számít. Küldd el ezt az oldalt valakinek, aki eddig nem hallott róla.</p>
+            <button class="card-button" type="button" data-share>Oldal megosztása</button>
+          </article>
+          <article>
+            <span class="action-number">4</span>
+            <h3>Segíts pontosítani</h3>
+            <p>Találtál ténybeli hibát, félreérthető mondatot vagy technikai problémát? A visszajelzésed nyilvános GitHub-bejelentésként érkezik.</p>
+            <a class="card-button" href="https://github.com/IPlayZed/nyitottlevel.hu/issues/new?template=feedback_hu.yml" target="_blank" rel="noreferrer">Visszajelzés küldése <span aria-hidden="true">↗</span></a>
+          </article>
+        </div>
+
+        <div class="action-banner reveal">
+          <div>
+            <span>Teljes háttéranyag</span>
+            <h3>13 240 szavas, Markdown-formátumú technikai jelentés, 61 egyedi hivatkozott forrással</h3>
+          </div>
+          <a class="primary-button primary-button--ink" href="chat-control-report.md" download="chat-control-jelentes-hu.md">Magyar jelentés letöltése <span aria-hidden="true">↓</span></a>
+        </div>
+      </section>
+
+      <section class="chapter story-section connection-section" id="kapcsolodas" data-chapter="9" aria-labelledby="connections-title">
+        <div class="chapter-heading reveal">
+          <p class="chapter-number">09 · Hová fordulhatsz?</p>
+          <h2 id="connections-title">Szervezetek, eszközök és közösségek, ahonnan továbbindulhatsz</h2>
+          <p>Más-más helyhez érdemes fordulni hivatalos panasszal, jogsegélykéréssel, technikai incidenssel vagy kutatási kérdéssel, illetve akkor, ha közösséghez szeretnél kapcsolódni. Válaszd ki, mire van szükséged; a kártyákon azt is jelezzük, mire nem való az adott hely.</p>
+        </div>
+
+        <div class="connection-route reveal" aria-label="Gyors útválasztó">
+          <article><span>Jogsérelem vagy adatvédelmi panasz</span><b>NAIH, TASZ vagy az ügy jellegétől függően a Magyar Helsinki Bizottság</b></article>
+          <i aria-hidden="true">→</i>
+          <article><span>Feltört fiók vagy kibertámadás</span><b>Az NKI incidensbejelentője; veszélyeztetett civileknek az Access Now segélyvonala</b></article>
+          <i aria-hidden="true">→</i>
+          <article><span>Kutatás, részvétel vagy közösség</span><b>Eötvös Károly Intézet, K-Monitor, Hackerspace Budapest, Európai Adatvédelmi Testület, EUR-Lex és uniós fórumok</b></article>
+        </div>
+
+        <div class="connection-explorer reveal">
+          <div class="connection-filters" aria-label="Kapcsolódási pontok szűrése">
+            <button type="button" data-connection-filter="all" aria-pressed="true">Mind</button>
+            <button type="button" data-connection-filter="help" aria-pressed="false">Segítség és panasz</button>
+            <button type="button" data-connection-filter="research" aria-pressed="false">Kutatás és követés</button>
+            <button type="button" data-connection-filter="community" aria-pressed="false">Közösség és részvétel</button>
+          </div>
+          <p class="connection-count" role="status" aria-live="polite"><b data-connection-count>16</b> kapcsolódási pont látható</p>
+          <div class="connection-grid">
+            <article data-connection-card data-tags="help research">
+              <div><span>HU</span><em>Hatóság</em></div><h3>NAIH</h3>
+              <p>Adatvédelmi jogok, hivatalos panasz és közérdekű adatok. Hatóságként jár el; nem nyújt személyes jogi képviseletet.</p>
+              <a href="https://naih.hu/erintetti-jogok" target="_blank" rel="noreferrer">Érintetti jogok és panasz <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research">
+              <div><span>HU</span><em>Civil jogvédelem</em></div><h3>TASZ</h3>
+              <p>Állami megfigyelés, információszabadság, bejelentők és egyes adatvédelmi ügyek. Az ingyenes jogsegély ügyköre és kapacitása korlátozott.</p>
+              <a href="https://tasz.hu/ingyenes-jogsegelyszolgalat/" target="_blank" rel="noreferrer">Ingyenes jogsegély <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research">
+              <div><span>HU</span><em>Emberi jogok</em></div><h3>Magyar Helsinki Bizottság</h3>
+              <p>Hatósági túlkapás, rendőri intézkedés, fogvatartás és jogállami ügyek. Nem általános adatvédelmi ügyfélszolgálat; előbb ellenőrizd az ügykört.</p>
+              <a href="https://helsinki.hu/segitseg-kerese/" target="_blank" rel="noreferrer">Segítségkérés <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research">
+              <div><span>HU</span><em>Állami kiberbiztonság</em></div><h3>NBSZ NKI</h3>
+              <p>Kiberbiztonsági incidens vagy sérülékenység bejelentése, akár név nélkül. Nem rendőrségi feljelentésre vagy adatvédelmi panaszra szolgál, és nem civil jogsegélyszolgálat.</p>
+              <a href="https://nki.gov.hu/intezet/tartalom/incidens-bejelentes/" target="_blank" rel="noreferrer">Incidens bejelentése <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research">
+              <div><span>HU</span><em>Kutatóintézet</em></div><h3>Eötvös Károly Intézet</h3>
+              <p>Az intézet alkotmányosságról, az állami működés átláthatóságáról, a magánszféráról és a megfigyelésről készít elemzéseket. Kutatási műhely, nem általános egyéni jogsegély.</p>
+              <a href="https://www.ekint.org/rolunk" target="_blank" rel="noreferrer">Bemutatkozás és elemzések <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research community">
+              <div><span>HU</span><em>Digitális civil eszközök</em></div><h3>K-Monitor Infohub</h3>
+              <p>Közérdekű adatigénylés, állami elszámoltathatóság, magyar útmutatók és műhelyek. Civil tudásbázis, nem hatóság, és nem vállal automatikusan jogi képviseletet.</p>
+              <a href="https://adatigenyles.k-monitor.hu/" target="_blank" rel="noreferrer">Információszabadság Infohub <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research community">
+              <div><span>HU</span><em>Nyilvános eszköz</em></div><h3>KiMitTud</h3>
+              <p>Közérdekű adatigénylést küldhetsz és követhetsz. A kérés és válasz nyilvános: érzékeny személyes adatot ne írj bele.</p>
+              <a href="https://kimittud.hu/help/about" target="_blank" rel="noreferrer">Az oldal működése <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community research">
+              <div><span>HU</span><em>Technológiai közösség</em></div><h3>H.A.C.K. / Hackerspace Budapest</h3>
+              <p>Önkéntes közösség, nyilvános csatornák és technológiai események. Nem segélyvonal és nem jogi szolgáltatás.</p>
+              <a href="https://www.hsbp.org/Kapcsolat" target="_blank" rel="noreferrer">Kapcsolat és közösségi csatornák <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community">
+              <div><span>HU</span><em>Jogvédő mozgalom</em></div><h3>Amnesty Magyarország</h3>
+              <p>Emberi jogi kampányok, oktatás, tagság és önkéntesség. Közösségi részvételre kínál lehetőséget; nem általános jogsegélyszolgálat.</p>
+              <a href="https://www.amnesty.hu/legy-tagunk/" target="_blank" rel="noreferrer">Csatlakozási lehetőségek <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community">
+              <div><span>HU</span><em>Civil hálózat</em></div><h3>Szabad Terek</h3>
+              <p>Független közösségi terek és civil szervezetek magyarországi hálózata. Helyi közösségekhez vezethet, de nem nyújt szakosított adatvédelmi segítséget.</p>
+              <a href="https://szabadterek.hu/" target="_blank" rel="noreferrer">Közösségek és terek <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research">
+              <div><span>HU</span><em>EU-s testület</em></div><h3>Európai Adatvédelmi Testület</h3>
+              <p>Hivatalos uniós iránymutatások, vélemények és döntések. Egyéni panaszt a nemzeti hatósághoz, Magyarországon a NAIH-hoz kell benyújtani.</p>
+              <a href="https://www.edpb.europa.eu/role-edpb_hu" target="_blank" rel="noreferrer">Az EDPB szerepe magyarul <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research">
+              <div><span>HU</span><em>EU-s jogtár</em></div><h3>EUR-Lex</h3>
+              <p>Jogszabályok, előkészítő dokumentumok és ítéletek hiteles uniós adatbázisa. Elsődleges forrás, nem jogi tanács.</p>
+              <a href="https://eur-lex.europa.eu/homepage.html?locale=hu" target="_blank" rel="noreferrer">EU-jog magyarul <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community research">
+              <div><span>HU</span><em>EU-s részvétel</em></div><h3>EP Petíciós Portál</h3>
+              <p>EU-s hatáskörbe tartozó, téged közvetlenül érintő ügyben petíciót nyújthatsz be vagy támogathatsz. Nem sürgősségi panaszeljárás.</p>
+              <a href="https://www.europarl.europa.eu/petitions/hu/home" target="_blank" rel="noreferrer">Petíciók magyarul <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="community research">
+              <div><span>HU</span><em>EU-s konzultáció</em></div><h3>Uniós nyilvános konzultációk</h3>
+              <p>Uniós kezdeményezések követése, visszajelzések és nyilvános konzultációk. Szakpolitikai részvétel, nem egyéni jogorvoslat.</p>
+              <a href="https://ec.europa.eu/info/law/better-regulation/have-your-say_hu" target="_blank" rel="noreferrer">Európai Bizottság konzultációi <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="research community">
+              <div><span>EN</span><em>Európai civil hálózat</em></div><h3>EDRi</h3>
+              <p>Digitális jogokkal kapcsolatos szakpolitika, kampányok és több mint ötven tagszervezet. Angol nyelvű európai hálózat, nem nyújt egyéni jogsegélyt.</p>
+              <a href="https://edri.org/about-us/" target="_blank" rel="noreferrer">Hálózat és témák <span aria-hidden="true">↗</span></a>
+            </article>
+            <article data-connection-card data-tags="help research">
+              <div><span>EN</span><em>Digitális segélyvonal</em></div><h3>Access Now Helpline</h3>
+              <p>Nonstop technikai segítség veszélyeztetett civileknek és szervezeteknek digitális támadás esetén. Nem általános informatikai ügyfélszolgálat; a tájékoztató nem sorolja fel a magyart a támogatott nyelvek között.</p>
+              <a href="https://www.accessnow.org/help/" target="_blank" rel="noreferrer">Jogosultság és biztonságos kapcsolat <span aria-hidden="true">↗</span></a>
+            </article>
+          </div>
+          <p class="connection-disclaimer"><b>Miért ilyen részletes a jelölés?</b> A felsorolás kiindulópont a tájékozódáshoz; nem rangsor, és nem állítja, hogy bármelyik szereplő minden ügyben megfelelő választás. A hatóságok, civil szervezetek, közösségek és adatbázisok feladata eltérő; kapcsolatfelvétel előtt ellenőrizd az ügykört és az adatkezelési tájékoztatót.</p>
+        </div>
+      </section>
+
+      <section class="sources-section" id="forrasok" aria-labelledby="sources-title">
+        <div>
+          <p class="eyebrow"><span></span> Ellenőrizd te is</p>
+          <h2 id="sources-title">A legfontosabb állítások forrásai</h2>
+        </div>
+        <div class="source-links">
+          <a href="https://eur-lex.europa.eu/legal-content/HU/TXT/?uri=CELEX:32021R1232" target="_blank" rel="noreferrer">
+            <span>EU-jogszabály · magyarul</span><b>2021/1232 rendelet</b><i aria-hidden="true">↗</i>
+          </a>
+          <a href="https://eur-lex.europa.eu/legal-content/HU/TXT/?uri=CELEX:52022PC0209" target="_blank" rel="noreferrer">
+            <span>Bizottsági javaslat · magyarul</span><b>COM(2022) 209</b><i aria-hidden="true">↗</i>
+          </a>
+          <a href="https://www.edpb.europa.eu/documents/legislative-opinion/edpb-edps-joint-opinion-042022-on-the-proposal-for-a-regulation-of_en" target="_blank" rel="noreferrer">
+            <span>Adatvédelmi vélemény · angolul</span><b>EDPB–EDPS 4/2022</b><i aria-hidden="true">↗</i>
+          </a>
+          <a href="https://data.europarl.europa.eu/distribution/reds_iPlPv_Vot/PV-10-2026-07-09-VOT/PV-10-2026-07-09-VOT-FNL_en.pdf" target="_blank" rel="noreferrer">
+            <span>Hivatalos jegyzőkönyv</span><b>2026. július 9-i szavazás</b><i aria-hidden="true">↗</i>
+          </a>
+          <a href="https://www.europarl.europa.eu/news/hu/press-room/20260706IPR46318/online-gyermekbantalmazas-tamogatas-a-korlatozott-onkentes-felderitesnek" target="_blank" rel="noreferrer">
+            <span>Parlamenti fejlemény · magyarul</span><b>A 2026. július 9-i módosítás</b><i aria-hidden="true">↗</i>
+          </a>
+          <a href="https://www.consilium.europa.eu/hu/press/press-releases/2026/07/02/council-moves-to-reinstate-interim-measure-to-combat-child-sexual-abuse-online/" target="_blank" rel="noreferrer">
+            <span>Tanácsi álláspont · magyarul</span><b>A 2026. július 2-i szöveg</b><i aria-hidden="true">↗</i>
+          </a>
+        </div>
+        <div class="related-sites">
+          <p class="mini-label">További tájékozódási pontok</p>
+          <h3>Kapcsolódó oldalak</h3>
+          <p>Ezek önálló civil vagy érdekvédelmi oldalak; a felsorolás nem jelent szervezeti partnerséget.</p>
+          <div class="related-grid">
+            <a href="https://fightchatcontrol.eu/" target="_blank" rel="noreferrer"><b>Fight Chat Control</b><span>Állampolgári követő és kampányoldal · angolul</span></a>
+            <a href="https://stopscanningme.eu/en/" target="_blank" rel="noreferrer"><b>Stop Scanning Me</b><span>EDRi-koalíció és közös állásfoglalások · angolul</span></a>
+            <a href="https://edri.org/our-work/chat-control-what-is-actually-going-on/" target="_blank" rel="noreferrer"><b>EDRi</b><span>Digitális jogi elemzések és alternatívák · angolul</span></a>
+            <a href="https://chat-kontrolle.eu/" target="_blank" rel="noreferrer"><b>Chat-Kontrolle</b><span>Részletes európai ügykövetés · németül</span></a>
+            <a href="https://hu.childsafetyineurope.com/" target="_blank" rel="noreferrer"><b>Child Safety in Europe</b><span>A szabályozást támogató érdekvédelmi nézőpont · magyarul</span></a>
+            <a href="https://www.naih.hu/hirek/825-a-gyermekek-szexualis-bantalmazasat-abrazolo-anyagok-csam-online-szuresevel-kapcsolatos-fejlemenyek" target="_blank" rel="noreferrer"><b>NAIH</b><span>Magyar adatvédelmi hatósági háttéranyag · magyarul</span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-brand">
+        <span class="brand-mark" aria-hidden="true"><span class="brand-envelope"></span><span class="brand-eye"></span></span>
+        <div><b>Nyitott Levél</b><span>Egy aggódó állampolgár ismeretterjesztő oldala.</span></div>
+      </div>
+      <p><strong>Fontos:</strong> ezt az oldalt nem ügyvédi iroda, jogi szakértői testület vagy sajtószerkesztőség ellenőrizte. Egy aggódó állampolgár készítette, hogy felhívja a figyelmet a technikai és alapjogi részletekre. <b>Az oldal nem támogat egyetlen politikai pártot sem, és nem pártpolitikai kampány:</b> a magánkommunikáció védelme, a jogállami garanciák és a gyermekek hatékony védelme pártpolitikai hovatartozástól független, alapvető ügy. Nem jogi tanács; ellenőrizd az állításokat a hivatkozott elsődleges forrásokban. Az információk ellenőrzésének dátuma: 2026. július 14. A forráskód AGPL-3.0-or-later licenc alatt érhető el.</p>
+      <nav class="footer-links" aria-label="Az oldal és a projekt hivatkozásai">
+        <a href="#kapcsolodas">Kapcsolódási pontok</a>
+        <a href="https://github.com/IPlayZed/nyitottlevel.hu/issues/new?template=feedback_hu.yml" target="_blank" rel="noreferrer">Visszajelzés ↗</a>
+        <a href="https://github.com/IPlayZed/nyitottlevel.hu" target="_blank" rel="noreferrer">Forráskód ↗</a>
+        <a href="LICENSE">AGPL-3.0 licenc</a>
+        <a href="#top">Vissza a tetejére ↑</a>
+      </nav>
+    </footer>
+
+    <dialog class="site-dialog" id="statusDialog" aria-labelledby="status-title">
+      <form method="dialog"><button class="dialog-close" aria-label="Bezárás">×</button></form>
+      <p class="eyebrow"><span></span> Állapot · 2026. július 14.</p>
+      <h2 id="status-title">Egyik történet sincs lezárva</h2>
+      <div class="dialog-status">
+        <div><span class="status-dot status-dot--off"></span><b>Chat Control 1.0</b><p>2026. április 3-án lejárt. A Parlament július 9-én módosította a Tanács visszaállítást célzó szövegét; a Tanácsnak még el kell fogadnia a módosításokat, vagy egyeztetés következik.</p></div>
+        <div><span class="status-dot status-dot--pending"></span><b>Chat Control 2.0</b><p>Állandó rendelettervezet. Öt intézményközi tárgyalás után sincs teljes megállapodás, főként az üzenetfelismerésről.</p></div>
+      </div>
+      <a class="text-link" href="chat-control-report.md" download="chat-control-jelentes-hu.md">Részletes magyar jelentés letöltése ↓</a>
+    </dialog>
+
+    <dialog class="site-dialog" id="letterDialog" aria-labelledby="letter-title">
+      <form method="dialog"><button class="dialog-close" aria-label="Bezárás">×</button></form>
+      <p class="eyebrow"><span></span> Tárgyszerű levélminta</p>
+      <h2 id="letter-title">Írj úgy, hogy komolyan vegyenek</h2>
+      <textarea id="letterTemplate" rows="12" readonly>Tisztelt Képviselő Asszony/Úr!
+
+Arra kérem, hogy a gyermekek online szexuális bántalmazása elleni fellépés során csak célzott, független bírói engedélyhez kötött intézkedéseket támogasson.
+
+Kérem a végpontok közötti titkosítás egyértelmű, a jogszabály szövegében rögzített védelmét; az új tartalmakat és beszélgetéseket felismerő technológiák független, nyilvános mérését; valamint összehasonlítható adatokat a téves riasztásokról, a jogorvoslatokról és a ténylegesen megvédett gyermekekről.
+
+A gyermekvédelem és a biztonságos magánkommunikáció egyszerre fontos. Olyan megoldást kérek, amely mindkettőt bizonyíthatóan erősíti.
+
+Tisztelettel:</textarea>
+      <button class="primary-button" type="button" data-copy-letter>Levél másolása</button>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <noscript>
+      <div class="noscript-note">Az interaktív ábrákhoz JavaScript szükséges. A teljes magyar kutatási jelentés ettől függetlenül <a href="chat-control-report.md" download="chat-control-jelentes-hu.md">Markdown-fájlként letölthető</a>.</div>
+    </noscript>
+  </body>
+</html>
