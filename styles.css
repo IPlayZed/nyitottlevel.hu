@@ -3124,15 +3124,18 @@ footer p strong { color: var(--mustard); }
 .postman-cap::after { position: absolute; right: -8px; bottom: -3px; width: 18px; height: 4px; border-radius: 1px 4px 4px 1px; background: var(--ink); content: ""; }
 .postman-body { z-index: 3; top: 37px; left: 13px; width: 41px; height: 45px; border: 2px solid var(--ink); border-radius: 12px 12px 6px 6px; background: var(--teal); }
 .postman-body::before { position: absolute; top: 0; left: 17px; width: 2px; height: 41px; background: rgba(255,255,255,.65); content: ""; }
+.postman-strap { z-index: 4; top: 36px; left: 45px; width: 4px; height: 52px; border: 1px solid var(--ink); border-radius: 99px; background: var(--mustard); transform: rotate(31deg); transform-origin: 50% 3px; }
 .postman-arm { z-index: 2; top: 42px; width: 12px; height: 43px; border: 2px solid var(--ink); border-radius: 99px; background: var(--teal); transform-origin: 50% 5px; }
 .postman-arm--front { right: 1px; transform: rotate(-28deg); }
 .postman-arm--back { left: 3px; transform: rotate(28deg); }
+.postman-hand { position: absolute; bottom: -7px; left: 50%; display: block; width: 10px; height: 10px; border: 2px solid var(--ink); border-radius: 50%; background: #d89a68; transform: translateX(-50%); }
 .postman-leg { z-index: 1; top: 76px; width: 13px; height: 34px; border: 2px solid var(--ink); border-radius: 7px; background: #314d61; transform-origin: 50% 3px; }
 .postman-leg::after { position: absolute; right: -5px; bottom: -5px; width: 18px; height: 8px; border: 2px solid var(--ink); border-radius: 8px 8px 3px 3px; background: var(--ink); content: ""; }
 .postman-leg--front { right: 11px; transform: rotate(-7deg); }
 .postman-leg--back { left: 14px; transform: rotate(7deg); }
-.postman-bag { z-index: 6; top: 50px; left: 2px; display: grid !important; place-items: center; width: 28px; height: 27px; border: 2px solid var(--ink); border-radius: 5px; background: var(--mustard); font-size: 13px; font-weight: 900; }
-.postman-bag::before { position: absolute; top: -2px; left: 13px; width: 30px; height: 3px; border-radius: 3px; background: var(--ink); content: ""; transform: rotate(-39deg); transform-origin: left center; }
+.postman-bag { z-index: 6; top: 60px; left: 0; width: 34px; height: 27px; overflow: hidden; border: 2px solid var(--ink); border-radius: 6px 6px 10px 10px; background: var(--mustard); }
+.postman-bag::before { position: absolute; top: -2px; right: -2px; left: -2px; height: 10px; border-bottom: 2px solid var(--ink); border-radius: 5px 5px 3px 3px; background: #f6c65f; content: ""; }
+.postman-bag::after { position: absolute; inset: 7px 0 0; display: grid; place-items: center; color: var(--ink); content: "✉"; font-size: 13px; font-weight: 900; line-height: 1; }
 .hero-postman { bottom: 18%; left: 3%; animation: postman-route 5.5s ease-in-out infinite; }
 .hero-postman .postman-arm--front,
 .hero-postman .postman-leg--back { animation: postman-limb 650ms ease-in-out infinite alternate; }
@@ -3474,7 +3477,7 @@ footer p,
 @keyframes postman-limb { from { rotate: -15deg; } to { rotate: 15deg; } }
 @keyframes postman-open-arm {
   0%, 23%, 58%, 100% { transform: rotate(-28deg); }
-  31%, 50% { transform: rotate(-96deg) translateY(-2px); }
+  31%, 50% { transform: rotate(-78deg) translateY(-2px); }
 }
 @keyframes mail-postman-open {
   0%, 12% { left: 7%; transform: scale(.82); }
@@ -3483,7 +3486,7 @@ footer p,
 }
 @keyframes mail-postman-arm-open {
   0%, 30% { transform: rotate(-28deg); }
-  46%, 72% { transform: rotate(-105deg); }
+  46%, 72% { transform: rotate(-80deg); }
   88%, 100% { transform: rotate(-28deg); }
 }
 @keyframes mail-flap-open {
@@ -3507,7 +3510,7 @@ footer p,
 }
 @keyframes mail-e2ee-attempt-arm {
   0%, 8%, 48%, 100% { transform: rotate(-28deg); }
-  18%, 38% { transform: rotate(-102deg) translateY(-2px); }
+  18%, 38% { transform: rotate(-80deg) translateY(-2px); }
 }
 @keyframes mail-e2ee-no-key {
   0%, 4% { opacity: 0; transform: translateY(-6px); }
@@ -3770,7 +3773,28 @@ footer p,
   .sources-section { grid-template-columns: 1fr; gap: 45px; }
   .related-grid { grid-template-columns: 1fr 1fr; }
   .connection-route { grid-template-columns: 1fr; gap: 0; }
-  .connection-route > i { min-height: 30px; border: 0; transform: rotate(90deg); }
+  .connection-route > i {
+    min-height: 42px;
+    border: 0;
+    background: transparent;
+    font-size: 0;
+    transform: none;
+  }
+  .connection-route > i::before {
+    content: "↓";
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    background: var(--mustard);
+    box-shadow: 2px 2px 0 var(--ink);
+    color: var(--ink);
+    font-size: 18px;
+    line-height: 1;
+  }
+  .connection-route article,
   .connection-route article:first-child,
   .connection-route article:last-child { border-radius: 16px; }
   .connection-grid { grid-template-columns: 1fr 1fr; }

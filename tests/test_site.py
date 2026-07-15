@@ -351,6 +351,54 @@ class SiteTests(unittest.TestCase):
         for link in cards.locator("a").all():
             self.assertTrue(link.get_attribute("href").startswith("https://"))
 
+    def test_connection_route_uses_short_non_overlapping_mobile_separators(self):
+        self.page.set_viewport_size({"width": 539, "height": 980})
+        self.page.goto(f"{self.base_url}/#kapcsolodas", wait_until="networkidle")
+        route = self.page.locator("#kapcsolodas .connection-route")
+        route.scroll_into_view_if_needed()
+        self.page.wait_for_timeout(100)
+        layout = route.evaluate(
+            """element => [...element.children].map(child => {
+              const rect = child.getBoundingClientRect();
+              const own = getComputedStyle(child);
+              const marker = getComputedStyle(child, '::before');
+              return {
+                tag: child.tagName,
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+                background: own.backgroundColor,
+                transform: own.transform,
+                markerWidth: parseFloat(marker.width),
+                markerHeight: parseFloat(marker.height),
+                markerContent: marker.content,
+              };
+            })"""
+        )
+        cards = [item for item in layout if item["tag"] == "ARTICLE"]
+        separators = [item for item in layout if item["tag"] == "I"]
+        self.assertEqual(len(cards), 3)
+        self.assertEqual(len(separators), 2)
+
+        for index, separator_box in enumerate(separators):
+            previous_card = cards[index]
+            next_card = cards[index + 1]
+            self.assertLessEqual(separator_box["height"], 44, f"separator {index + 1} is too tall")
+            self.assertGreaterEqual(separator_box["y"], previous_card["y"] + previous_card["height"] - 1)
+            self.assertLessEqual(separator_box["y"] + separator_box["height"], next_card["y"] + 1)
+            self.assertIn(separator_box["background"], ("rgba(0, 0, 0, 0)", "transparent"))
+            self.assertEqual(separator_box["transform"], "none")
+            self.assertLessEqual(separator_box["markerWidth"], 36)
+            self.assertLessEqual(separator_box["markerHeight"], 36)
+            self.assertNotEqual(separator_box["markerContent"], "none")
+
+        overflow = self.page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
+        self.assertLessEqual(overflow, 1)
+        artifact_dir = ROOT / "test-artifacts" / "regressions"
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+        route.screenshot(path=str(artifact_dir / "539x980-connection-route.png"), animations="disabled")
+
     def test_detection_math_invariants_and_zero_alert_state(self):
         cases = (
             (1, 0, 0, 0),
@@ -587,6 +635,9 @@ class SiteTests(unittest.TestCase):
 
     def test_encryption_postman_and_safeguard_graphics(self):
         self.assertEqual(self.page.locator(".postman").count(), 2)
+        self.assertEqual(self.page.locator(".postman-satchel").count(), 2)
+        self.assertEqual(self.page.locator(".postman-strap").count(), 2)
+        self.assertEqual(self.page.locator(".postman-hand").count(), 4)
         encryption = self.page.locator("encryption-layers")
         self.assertEqual(encryption.get_by_role("tab").count(), 4)
         encryption.get_by_role("tab", name="4 · Lezárva a címzettig").click()
@@ -615,6 +666,141 @@ class SiteTests(unittest.TestCase):
         for button in builder.locator("[data-safeguard]").all()[1:]:
             button.click()
         self.assertIn("nem automatikus jóváhagyás", builder.locator(".safeguard-status").inner_text())
+
+    def test_postman_satchel_pose_keyframes_and_reduced_motion(self):
+        self.page.set_viewport_size({"width": 320, "height": 900})
+        self.page.reload(wait_until="networkidle")
+        artifact_dir = ROOT / "test-artifacts" / "regressions" / "postman-keyframes"
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+
+        def freeze_animations(selector, time_ms):
+            self.page.evaluate(
+                """({selector, time}) => {
+                  const root = document.querySelector(selector);
+                  root.getAnimations({subtree: true}).forEach(animation => {
+                    animation.pause();
+                    animation.currentTime = time;
+                  });
+                }""",
+                {"selector": selector, "time": time_ms},
+            )
+
+        def assert_clear_satchel(postman, label, hand_extended=False):
+            head_box = postman.locator(".postman-head").bounding_box()
+            satchel = postman.locator(".postman-satchel")
+            bag_box = satchel.bounding_box()
+            hand_box = postman.locator(".postman-arm--front .postman-hand").bounding_box()
+            mail_cues = satchel.evaluate(
+                """element => {
+                  const flap = getComputedStyle(element, '::before');
+                  const mark = getComputedStyle(element, '::after');
+                  return {
+                    flapHeight: parseFloat(flap.height),
+                    flapBorder: parseFloat(flap.borderBottomWidth),
+                    markContent: mark.content,
+                    markFontSize: parseFloat(mark.fontSize),
+                  };
+                }"""
+            )
+            self.assertGreaterEqual(
+                bag_box["y"],
+                head_box["y"] + head_box["height"] + 4,
+                f"{label}: satchel rises into the face",
+            )
+            self.assertGreater(
+                bag_box["width"],
+                bag_box["height"],
+                f"{label}: satchel reads as a square can instead of a wide mail bag",
+            )
+            self.assertGreaterEqual(
+                mail_cues["flapHeight"],
+                8,
+                f"{label}: satchel flap is not visibly drawn",
+            )
+            self.assertGreaterEqual(
+                mail_cues["flapBorder"],
+                1,
+                f"{label}: satchel flap has no visible separation",
+            )
+            self.assertIn(
+                "✉",
+                mail_cues["markContent"],
+                f"{label}: satchel is missing its mail mark",
+            )
+            self.assertGreaterEqual(
+                mail_cues["markFontSize"],
+                12,
+                f"{label}: satchel mail mark is too small to read",
+            )
+            if hand_extended:
+                self.assertGreaterEqual(
+                    hand_box["x"],
+                    head_box["x"] + head_box["width"] + 2,
+                    f"{label}: reaching hand remains too close to the face",
+                )
+
+        hero = self.page.locator(".hero-postman")
+        for percent in (0, 23, 31, 50, 58, 70, 100):
+            freeze_animations(".post-office", 5500 * percent / 100)
+            assert_clear_satchel(hero, f"hero {percent}%", hand_extended=percent in (31, 50))
+            self.page.locator(".post-office").screenshot(
+                path=str(artifact_dir / f"hero-320-{percent:03d}.png")
+            )
+
+        story = self.page.locator("mail-story")
+        story.locator('[data-step="0"]').click()
+        for percent in (0, 30, 46, 55, 72, 88, 100):
+            freeze_animations("mail-story .mail-illustration", 5400 * percent / 100)
+            assert_clear_satchel(
+                story.locator(".mail-postman"),
+                f"mail opening {percent}%",
+                hand_extended=percent in (46, 55, 72),
+            )
+            story.locator(".mail-illustration").screenshot(
+                path=str(artifact_dir / f"story-open-320-{percent:03d}.png")
+            )
+
+        story.locator('[data-step="1"]').click()
+        for percent in (0, 8, 18, 38, 48, 100):
+            freeze_animations("mail-story .mail-illustration", 7200 * percent / 100)
+            assert_clear_satchel(
+                story.locator(".mail-postman"),
+                f"locked-letter attempt {percent}%",
+                hand_extended=percent in (18, 38),
+            )
+            story.locator(".mail-illustration").screenshot(
+                path=str(artifact_dir / f"story-locked-320-{percent:03d}.png")
+            )
+
+        self.page.emulate_media(reduced_motion="reduce")
+        self.page.reload(wait_until="networkidle")
+        reduced_motion = self.page.eval_on_selector_all(
+            ".postman, .postman *",
+            """elements => {
+              const toMilliseconds = value => {
+                const trimmed = value.trim();
+                return trimmed.endsWith('ms') ? parseFloat(trimmed) : parseFloat(trimmed) * 1000;
+              };
+              const durations = elements.flatMap(element =>
+                getComputedStyle(element).animationDuration.split(',').map(toMilliseconds)
+              );
+              const iterations = elements.flatMap(element =>
+                getComputedStyle(element).animationIterationCount.split(',').map(value =>
+                  value.trim() === 'infinite' ? Infinity : parseFloat(value)
+                )
+              );
+              return {
+                maxDurationMs: Math.max(...durations),
+                maxIterations: Math.max(...iterations),
+              };
+            }""",
+        )
+        self.assertLessEqual(reduced_motion["maxDurationMs"], 0.1)
+        self.assertLessEqual(reduced_motion["maxIterations"], 1)
+        self.assertEqual(self.page.locator(".postman-satchel").count(), 2)
+        self.page.locator(".post-office").screenshot(
+            path=str(artifact_dir / "hero-320-reduced-motion.png"), animations="disabled"
+        )
 
     def test_legacy_language_page_redirects_to_hungarian_site(self):
         self.page.goto(f"{self.base_url}/languages.html?lang=en", wait_until="networkidle")
