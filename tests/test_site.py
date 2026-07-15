@@ -209,6 +209,15 @@ class SiteTests(unittest.TestCase):
         self.assertIn("<img src=x onerror=alert(2)>", quiz.locator(".quiz-feedback").inner_text())
 
     def test_mail_story_and_version_switcher(self):
+        postal_map = self.page.locator(".postal-map")
+        self.assertEqual(postal_map.locator(".postal-card").count(), 7)
+        first_postal_card = postal_map.locator(".postal-card").first
+        self.assertIsNone(first_postal_card.locator(".postal-card__front").get_attribute("aria-hidden"))
+        first_postal_card.locator(".postal-card__front [data-flip]").click()
+        self.assertTrue("is-flipped" in (first_postal_card.get_attribute("class") or ""))
+        self.assertEqual(first_postal_card.locator(".postal-card__back").get_attribute("aria-hidden"), "false")
+        first_postal_card.locator(".postal-card__back [data-flip]").click()
+        self.assertFalse("is-flipped" in (first_postal_card.get_attribute("class") or ""))
         self.assertEqual(self.page.locator(".moving-letter .letter-flap").count(), 1)
         self.assertEqual(self.page.locator(".moving-letter .letter-pocket").count(), 1)
         self.assertEqual(self.page.locator(".moving-letter .letter-seal").count(), 0)

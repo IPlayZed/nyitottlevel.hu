@@ -1167,37 +1167,78 @@ footer {
 .postal-map {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1px;
+  gap: 14px;
   max-width: min(1500px, 100%);
   margin: -18px auto 48px;
+}
+
+.postal-card {
+  min-width: 0;
+  min-height: 236px;
+  perspective: 900px;
+}
+
+.postal-card:nth-child(5) { grid-column: span 2; }
+
+.postal-card__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  transform-style: preserve-3d;
+  transition: transform 520ms cubic-bezier(.2,.75,.2,1);
+}
+
+.postal-card.is-flipped .postal-card__inner { transform: rotateY(180deg); }
+
+.postal-card__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
   overflow: hidden;
   border: 2px solid var(--ink);
-  border-radius: 22px;
-  background: var(--ink);
-  box-shadow: 9px 9px 0 var(--mustard);
+  border-radius: 20px;
+  box-shadow: 6px 7px 0 var(--mustard);
+  backface-visibility: hidden;
 }
 
-.postal-map > div {
-  min-width: 0;
-  padding: 18px 20px;
-  background: var(--paper-light);
+.postal-card__front { background: var(--paper-light); }
+.postal-card:nth-child(2) .postal-card__front { background: var(--mustard-pale); }
+.postal-card:nth-child(3) .postal-card__front { background: var(--teal-pale); }
+.postal-card:nth-child(4) .postal-card__front { background: var(--violet-pale); }
+.postal-card:nth-child(5) .postal-card__front { background: #e8f7f2; }
+.postal-card:nth-child(6) .postal-card__front { background: #fdefed; }
+.postal-card__back { background: var(--ink); color: white; transform: rotateY(180deg); }
+
+.postal-card__emoji { margin-bottom: 10px; font-size: 34px; line-height: 1; }
+.postal-card h3 { margin: 0; color: var(--teal-dark); font-family: Georgia, serif; font-size: 22px; line-height: 1.08; }
+.postal-card p { margin: 10px 0 0; color: var(--ink-soft); font-size: max(15px, var(--readable-small)); line-height: 1.45; }
+.postal-card__back h3 { color: white; }
+.postal-card__back p { color: rgba(255,255,255,.85); }
+
+.postal-card button {
+  width: 100%;
+  margin-top: auto;
+  padding: 9px 11px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  text-align: center;
 }
 
-.postal-map dt {
-  margin-bottom: 5px;
-  color: var(--teal-dark);
-  font-size: var(--readable-small);
-  font-weight: 900;
-  letter-spacing: .055em;
-  text-transform: uppercase;
-}
-
-.postal-map dd {
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: max(15px, var(--readable-small));
-  line-height: 1.5;
-}
+.postal-card button:hover,
+.postal-card button:focus-visible { background: var(--ink); color: white; }
+.postal-card__back button { border-color: rgba(255,255,255,.75); color: white; }
+.postal-card__back button:hover,
+.postal-card__back button:focus-visible { background: white; color: var(--ink); }
 
 .chapter-heading h2,
 .action-intro h2,
@@ -3813,8 +3854,11 @@ footer p,
   .story-section,
   .sources-section,
   footer { padding-right: 18px; padding-left: 18px; }
-  .postal-map { grid-template-columns: 1fr; border-radius: 17px; box-shadow: 6px 6px 0 var(--mustard); }
-  .postal-map > div { padding: 16px 17px; }
+  .postal-map { grid-template-columns: 1fr; gap: 12px; }
+  .postal-card { min-height: 278px; }
+  .postal-card:nth-child(5) { grid-column: auto; }
+  .postal-card__face { padding: 18px; border-radius: 18px; }
+  .postal-card__emoji { font-size: 31px; }
   .action-grid { grid-template-columns: 1fr; }
   .hero { padding-top: 45px; }
   .hero-copy { overflow-wrap: anywhere; }
@@ -4015,6 +4059,11 @@ footer p,
   html { scroll-behavior: auto; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .reveal { opacity: 1; transform: none; }
+  .postal-card__inner { transform: none !important; }
+  .postal-card__face { transform: none; transition: opacity .01ms; }
+  .postal-card__back { opacity: 0; }
+  .postal-card.is-flipped .postal-card__front { opacity: 0; pointer-events: none; }
+  .postal-card.is-flipped .postal-card__back { opacity: 1; pointer-events: auto; }
 }
 
 html[data-reduce-motion="true"] { scroll-behavior: auto; }
@@ -4022,3 +4071,8 @@ html[data-reduce-motion="true"] *,
 html[data-reduce-motion="true"] *::before,
 html[data-reduce-motion="true"] *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 html[data-reduce-motion="true"] .reveal { opacity: 1; transform: none; }
+html[data-reduce-motion="true"] .postal-card__inner { transform: none !important; }
+html[data-reduce-motion="true"] .postal-card__face { transform: none; transition: opacity .01ms; }
+html[data-reduce-motion="true"] .postal-card__back { opacity: 0; }
+html[data-reduce-motion="true"] .postal-card.is-flipped .postal-card__front { opacity: 0; pointer-events: none; }
+html[data-reduce-motion="true"] .postal-card.is-flipped .postal-card__back { opacity: 1; pointer-events: auto; }

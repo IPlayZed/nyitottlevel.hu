@@ -94,14 +94,14 @@ class FirefoxPostalProfileTests(unittest.TestCase):
             postal_map = page.locator(".postal-map")
             postal_map.scroll_into_view_if_needed()
             page.locator(".postal-map.is-visible").wait_for(state="visible")
-            self.assertEqual(postal_map.locator(":scope > div").count(), 7)
+            self.assertEqual(postal_map.locator(":scope > article").count(), 7)
             self.assertLessEqual(
                 postal_map.evaluate("element => element.scrollWidth - element.clientWidth"),
                 1,
                 f"{name}: postal map overflows",
             )
             if viewport["width"] <= 820:
-                glossary_sizes = postal_map.locator("dt, dd").evaluate_all(
+                glossary_sizes = postal_map.locator(".postal-card p").evaluate_all(
                     "elements => elements.map(element => parseFloat(getComputedStyle(element).fontSize))"
                 )
                 self.assertGreaterEqual(min(glossary_sizes), 15, f"{name}: glossary text is below 15px")

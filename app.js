@@ -1816,17 +1816,17 @@ document.querySelectorAll("[data-connection-filter]").forEach((button) => {
   });
 });
 
-document.querySelectorAll("[data-flip-card]").forEach((card) => {
+document.querySelectorAll("[data-flip-card], [data-postal-flip]").forEach((card) => {
   card.querySelectorAll("[data-flip]").forEach((button) => button.addEventListener("click", () => {
     const flipped = !card.classList.contains("is-flipped");
     card.classList.toggle("is-flipped", flipped);
-    const front = card.querySelector(".institution-card__front");
-    const back = card.querySelector(".institution-card__back");
+    const front = card.querySelector(".institution-card__front, .postal-card__front");
+    const back = card.querySelector(".institution-card__back, .postal-card__back");
     front.toggleAttribute("inert", flipped);
     back.toggleAttribute("inert", !flipped);
     front.setAttribute("aria-hidden", String(flipped));
     back.setAttribute("aria-hidden", String(!flipped));
-    card.querySelector(".institution-card__front [data-flip]")?.setAttribute("aria-expanded", String(flipped));
+    front.querySelector("[data-flip]")?.setAttribute("aria-expanded", String(flipped));
     requestAnimationFrame(() => (flipped ? back : front).querySelector("[data-flip]")?.focus());
   }));
 });

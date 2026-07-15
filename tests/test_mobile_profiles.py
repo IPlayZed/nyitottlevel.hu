@@ -484,7 +484,7 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     screenshot_paths["safeguards"] = str(safeguard_path.relative_to(ROOT))
 
                     readable_selector = ",".join((
-                        ".postal-map dt", ".postal-map dd",
+                        ".postal-card p",
                         ".mail-e2ee-no-key b", ".mail-e2ee-no-key span", ".mail-e2ee-key b",
                         ".mail-e2ee-key small", ".mail-key-comparison span", ".mail-key-comparison small",
                         ".rate-derived small", ".rare-count > span", "footer p",
