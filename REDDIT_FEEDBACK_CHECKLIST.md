@@ -73,7 +73,7 @@ Reddit reference: [request to include and contextualize the first July vote](htt
 
 ## Help and research directory
 
-- [ ] Fix the connection-route layout around 539 px wide: the vertical gold connector must not cover the route-card text.
+- [x] Fix the connection-route layout around 539 px wide: the vertical gold connector must not cover the route-card text.
 - [ ] Re-audit every organization in the “Who can I contact or research?” directory.
 - [ ] State whether each organization offers individual help, accepts complaints, conducts research, advocates, or merely publishes official material.
 - [ ] Re-check whether NAIH is relevant to each scenario described, including cases where processing is explicitly authorized by law.
@@ -103,12 +103,12 @@ Reddit reference: [Markdown usability and wording criticism](https://www.reddit.
 
 ## Visual details
 
-- [ ] Redesign the postman’s hand-held object or pose so it cannot look like inhaling from a fuel can.
-- [ ] Inspect the postman at every animation keyframe, not only the resting frame.
-- [ ] Verify that the revised postman still reads clearly at 320 px width.
-- [ ] Preserve the existing color palette unless a contrast or accessibility test requires a change.
-- [ ] Re-run reduced-motion checks after changing the animation.
-- [ ] Re-run all mobile and desktop screenshot states after changing the character.
+- [x] Redesign the postman’s hand-held object or pose so it cannot look like inhaling from a fuel can.
+- [x] Inspect the postman at every animation keyframe, not only the resting frame.
+- [x] Verify that the revised postman still reads clearly at 320 px width.
+- [x] Preserve the existing color palette unless a contrast or accessibility test requires a change.
+- [x] Re-run reduced-motion checks after changing the animation.
+- [x] Re-run all mobile and desktop screenshot states after changing the character.
 
 Reddit reference: [postman joke and color-palette praise](https://www.reddit.com/r/hungary/comments/1uwniq2/k%C3%A9sz%C3%ADtettem_magyarul_egy_bemutat%C3%B3_oldalt_a_chat/oxkq217/)
 

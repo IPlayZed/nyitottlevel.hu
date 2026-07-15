@@ -147,12 +147,27 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                       letter.querySelector('.letter-sheet').style.transform = 'translateY(-31px)';
                       letter.querySelector('.letter-heart').style.opacity = '0';
                       postman.style.transform = 'translateX(92px) translateY(-2px) scale(.8)';
-                      postman.querySelector('.postman-arm--front').style.transform = 'rotate(-96deg) translateY(-2px)';
+                      postman.querySelector('.postman-arm--front').style.transform = 'rotate(-78deg) translateY(-2px)';
                     }""")
                     capture("hero_mail_open", "02-hero-mail-open.jpg", ".post-office")
                     letter_box = page.locator(".moving-letter").bounding_box()
                     sheet_box = page.locator(".letter-sheet").bounding_box()
+                    hero_postman = page.locator(".hero-postman")
+                    postman_head_box = hero_postman.locator(".postman-head").bounding_box()
+                    postman_bag_box = hero_postman.locator(".postman-satchel").bounding_box()
+                    postman_hand_box = hero_postman.locator(".postman-arm--front .postman-hand").bounding_box()
                     self.assertLess(sheet_box["y"], letter_box["y"], name)
+                    self.assertGreaterEqual(
+                        postman_bag_box["y"],
+                        postman_head_box["y"] + postman_head_box["height"] + 4,
+                        f"{name}: satchel rises into the face",
+                    )
+                    self.assertGreater(postman_bag_box["width"], postman_bag_box["height"], f"{name}: satchel is not wide")
+                    self.assertGreaterEqual(
+                        postman_hand_box["x"],
+                        postman_head_box["x"] + postman_head_box["width"] + 2,
+                        f"{name}: reaching hand remains too close to the face",
+                    )
                     self.assertEqual(page.locator(".letter-seal").count(), 0)
                     page.locator("#motionToggle").click()
                     capture("paused_header", "02-paused-header.jpg", ".site-header")
@@ -318,6 +333,7 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                                 "minimum_readable_helper_font_px": min(helper_sizes),
                                 "minimum_encryption_story_edge_margin_px": min(encryption_label_margins),
                                 "opened_letter_sheet_rise_px": round(letter_box["y"] - sheet_box["y"], 2),
+                                "postman_satchel_face_clearance_px": round(postman_bag_box["y"] - postman_head_box["y"] - postman_head_box["height"], 2),
                                 "browser_errors": errors,
                             },
                             "screenshot_bytes": {

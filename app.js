@@ -102,9 +102,10 @@ class MailStory extends ReactiveElement {
           <div class="mail-illustration mail-illustration--step-${state.mailStep}" aria-hidden="true">
             <div class="postman mail-postman mail-postman--step-${state.mailStep} ${state.mailStep > 1 ? "is-hidden" : ""}">
               <span class="postman-head"></span><span class="postman-cap"></span><span class="postman-body"></span>
-              <span class="postman-arm postman-arm--front"></span><span class="postman-arm postman-arm--back"></span>
+              <span class="postman-strap"></span>
+              <span class="postman-arm postman-arm--front"><i class="postman-hand"></i></span><span class="postman-arm postman-arm--back"><i class="postman-hand"></i></span>
               <span class="postman-leg postman-leg--front"></span><span class="postman-leg postman-leg--back"></span>
-              <span class="postman-bag">✉</span>
+              <span class="postman-bag postman-satchel"></span>
             </div>
             ${item.inspection ? `
               <div class="mail-inspection-booth">
