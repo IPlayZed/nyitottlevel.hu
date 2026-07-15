@@ -163,6 +163,7 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                     else:
                         page.locator(".desktop-nav .nav-group").first.hover()
                         capture("navigation_open", "02b-navigation-open.jpg")
+                    capture("common_misconceptions", "02c-common-misconceptions.jpg", "#gyakori-tevhitek")
                     capture("action_cards", "03-action-cards.jpg", ".action-grid")
                     capture("institution_intro", "03a-institution-intro.jpg", "#intezmenyek .chapter-heading")
                     capture("institution_cards", "03b-institution-cards.jpg", "#intezmenyek .institution-path")
