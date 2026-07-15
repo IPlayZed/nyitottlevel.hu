@@ -1,0 +1,58 @@
+name: Visszajelzés az oldalról
+description: Hibajelzés, pontosítási javaslat vagy általános visszajelzés a Nyitott Levél oldalhoz
+title: "[Visszajelzés] "
+labels:
+  - visszajelzés
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Köszönöm, hogy segítesz pontosabbá és érthetőbbé tenni az oldalt.
+
+        A bejelentés és minden hozzászólás nyilvános lesz. Ne írj bele nevet, elérhetőséget, magánbeszélgetést, egészségügyi adatot vagy más személyes, bizalmas, illetve érzékeny információt.
+  - type: dropdown
+    id: tipus
+    attributes:
+      label: A visszajelzés típusa
+      options:
+        - Ténybeli vagy forráshiba
+        - Félreérthető megfogalmazás
+        - Technikai vagy megjelenítési hiba
+        - Akadálymentességi probléma
+        - Tartalmi javaslat
+        - Egyéb
+    validations:
+      required: true
+  - type: input
+    id: oldalresz
+    attributes:
+      label: Melyik oldalrészt érinti?
+      description: Írd le a fejezet címét, a gomb szövegét vagy más könnyen felismerhető részletet.
+      placeholder: Például: 04 · Kit érinthet?
+    validations:
+      required: true
+  - type: textarea
+    id: leiras
+    attributes:
+      label: Mit kellene javítani vagy pontosítani?
+      description: Írd le, mit láttál, miért problémás, és milyen eredményre számítottál.
+    validations:
+      required: true
+  - type: textarea
+    id: forras
+    attributes:
+      label: Forrás vagy hivatkozás
+      description: Ténybeli pontosításnál lehetőleg elsődleges forrást adj meg. Ez a mező nem kötelező.
+  - type: input
+    id: kornyezet
+    attributes:
+      label: Böngésző és eszköz
+      description: Technikai hibánál add meg a böngészőt, az eszközt és lehetőleg a képernyőméretet.
+      placeholder: Például: Firefox 128, Windows 11, 1920×1080
+  - type: checkboxes
+    id: adatvedelem
+    attributes:
+      label: Nyilvánosság és adatvédelem
+      options:
+        - label: Tudomásul veszem, hogy a bejelentés nyilvános, és nem adtam meg személyes, bizalmas vagy érzékeny adatot.
+          required: true
