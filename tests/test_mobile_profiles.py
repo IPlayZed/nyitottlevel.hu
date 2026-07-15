@@ -141,7 +141,7 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                       letter.querySelector('.letter-sheet').style.transform = 'translateY(-31px)';
                       letter.querySelector('.letter-heart').style.opacity = '0';
                       postman.style.transform = 'translateX(92px) translateY(-2px) scale(.8)';
-                      postman.querySelector('.postman-arm--front').style.transform = 'rotate(-96deg) translateY(-2px)';
+                      postman.querySelector('.postman-arm--front').style.transform = 'rotate(-78deg) translateY(-2px)';
                     }""")
                     hero_open_path = artifact_dir / "02-hero-mail-open.jpg"
                     page.locator(".post-office").screenshot(path=str(hero_open_path), type="jpeg", quality=64)
@@ -150,9 +150,24 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     sheet_box = page.locator(".letter-sheet").bounding_box()
                     pocket_box = page.locator(".letter-pocket").bounding_box()
                     speech_box = page.locator(".speech-cloud").bounding_box()
+                    hero_postman = page.locator(".hero-postman")
+                    postman_head_box = hero_postman.locator(".postman-head").bounding_box()
+                    postman_bag_box = hero_postman.locator(".postman-satchel").bounding_box()
+                    postman_hand_box = hero_postman.locator(".postman-arm--front .postman-hand").bounding_box()
                     self.assertLess(sheet_box["y"], letter_box["y"], profile_label)
                     self.assert_inside(sheet_box, page.locator(".post-office").bounding_box(), f"{profile_label}: opened letter sheet")
                     self.assert_inside(pocket_box, letter_box, f"{profile_label}: envelope front pocket")
+                    self.assertGreaterEqual(
+                        postman_bag_box["y"],
+                        postman_head_box["y"] + postman_head_box["height"] + 4,
+                        f"{profile_label}: satchel rises into the face",
+                    )
+                    self.assertGreater(postman_bag_box["width"], postman_bag_box["height"], f"{profile_label}: satchel is not wide")
+                    self.assertGreaterEqual(
+                        postman_hand_box["x"],
+                        postman_head_box["x"] + postman_head_box["width"] + 2,
+                        f"{profile_label}: reaching hand remains too close to the face",
+                    )
                     if viewport["width"] <= 380:
                         self.assertLessEqual(
                             speech_box["y"] + speech_box["height"],
@@ -386,6 +401,29 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                     screenshot_paths["help_directory"] = str(connection_path.relative_to(ROOT))
                     visible_connection_cards = page.locator("#kapcsolodas [data-connection-card]:visible").count()
                     self.assertEqual(visible_connection_cards, 6)
+                    route = page.locator("#kapcsolodas .connection-route")
+                    route_path = artifact_dir / "09a-connection-route.jpg"
+                    route.screenshot(path=str(route_path), type="jpeg", quality=62, animations="disabled")
+                    screenshot_paths["connection_route"] = str(route_path.relative_to(ROOT))
+                    route_separator_max_height = None
+                    if viewport["width"] <= 820:
+                        route_layout = route.evaluate(
+                            """element => [...element.children].map(child => {
+                              const rect = child.getBoundingClientRect();
+                              return {tag: child.tagName, y: rect.y, height: rect.height};
+                            })"""
+                        )
+                        route_cards = [item for item in route_layout if item["tag"] == "ARTICLE"]
+                        route_separators = [item for item in route_layout if item["tag"] == "I"]
+                        separator_heights = []
+                        for separator_index, separator_box in enumerate(route_separators):
+                            previous_card = route_cards[separator_index]
+                            next_card = route_cards[separator_index + 1]
+                            separator_heights.append(separator_box["height"])
+                            self.assertLessEqual(separator_box["height"], 44, f"{profile_label}: route separator is too tall")
+                            self.assertGreaterEqual(separator_box["y"], previous_card["y"] + previous_card["height"] - 1)
+                            self.assertLessEqual(separator_box["y"] + separator_box["height"], next_card["y"] + 1)
+                        route_separator_max_height = max(separator_heights)
 
                     page.locator("vote-explorer").scroll_into_view_if_needed()
                     page.wait_for_timeout(50)
@@ -474,6 +512,8 @@ class ChromiumMobileProfileTests(unittest.TestCase):
                             "visible_help_directory_cards": visible_connection_cards,
                             "initial_vote_member_cards": initial_member_count,
                             "opened_letter_sheet_rise_px": round(letter_box["y"] - sheet_box["y"], 2),
+                            "postman_satchel_face_clearance_px": round(postman_bag_box["y"] - postman_head_box["y"] - postman_head_box["height"], 2),
+                            "mobile_route_separator_max_height_px": route_separator_max_height,
                             "horizontal_overflow_sources": overflow_sources,
                             "browser_errors": errors,
                         },
