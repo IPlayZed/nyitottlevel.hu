@@ -289,9 +289,19 @@
           <p class="chapter-number">01 · A lezárt levél</p>
           <h2 id="posta-title">Először értsük meg, mi történik egy üzenettel</h2>
           <p>
-            Nem kell tudnod, mi az az algoritmus vagy a szerver. Képzeld el úgy, mintha levelet adnál fel.
+            Képzeld el úgy, mintha levelet adnál fel. Az ábrákon végig ugyanazok a jelek szerepelnek:
           </p>
         </div>
+
+        <dl class="postal-map reveal" aria-label="A levélhasonlat jelmagyarázata">
+          <div><dt>Papír</dt><dd>Az olvasható üzenet tartalma.</dd></div>
+          <div><dt>Lezárt belső boríték</dt><dd>A titkosított, kulcs nélkül olvashatatlan tartalom.</dd></div>
+          <div><dt>Digitális kulcs</dt><dd>A feloldáshoz szükséges, készüléken vagy szolgáltatónál őrzött információ — nem valódi kulcs, és nem feltétlenül jelszó.</dd></div>
+          <div><dt>Feladó és címzett</dt><dd>A beszélgetés résztvevőinek készülékei.</dd></div>
+          <div><dt>Posta és postás</dt><dd>Az üzenetet továbbító szolgáltatás és annak rendszere.</dd></div>
+          <div><dt>Ellenőrzőgép</dt><dd>Az üzenet tartalmát automatikusan átvizsgáló rendszer. Ha egy jelzést később ember néz meg, azt külön jelezzük.</dd></div>
+          <div><dt>Hatóság vagy bíróság</dt><dd>Elrendelheti vagy jóváhagyhatja, mit keressen a szolgáltató; ettől még nem kap automatikusan digitális kulcsot.</dd></div>
+        </dl>
 
         <mail-story class="reveal"></mail-story>
 
@@ -300,9 +310,11 @@
           <div>
             <strong>Egyszerűen:</strong>
             <p>
-              A <b>végpontok közötti titkosítás</b> olyan, mint egy doboz, amelyet csak te és a címzett tudtok
-              kinyitni. Ha a szolgáltató ellenőrizni akarja a tartalmát, akkor vagy kulcsot kell kapnia, vagy a
-              levelet még lezárás előtt kell megnéznie.
+              A <b>végpontok közötti titkosítás</b> olyan, mintha a telefonod különleges belső borítékba zárná
+              az üzenetet, amelyet csak a beszélgetés résztvevőinek készülékei tudnak kinyitni. A „kulcs” itt
+              digitális információ, amely a lezárt adatot ismét érthető üzenetté alakítja. Ha a szolgáltató az
+              olvasható tartalmat akarja automatikusan ellenőrizni, hozzáférést kell kapnia a feloldáshoz, vagy
+              még a lezárás előtt kell átvizsgálnia az üzenetet.
             </p>
           </div>
         </aside>

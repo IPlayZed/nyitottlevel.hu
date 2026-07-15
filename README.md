@@ -28,34 +28,39 @@ Then open `http://localhost:4173`.
 - `tests/test_site.py` — Playwright-based end-to-end browser tests
 - `tests/test_mobile_profiles.py` — interactive layout checks across every unique viewport in Playwright's built-in Chromium mobile-device catalogue; it captures twenty-three state screenshots per viewport, rejects black/compositor-corrupted frames, and writes a geometry/font-size analysis manifest
 - `tests/test_desktop_profiles.py` — stateful visual checks for the documented desktop support matrix
-- `scripts/run_visual_tests.py` — parallel visual-test runner that shards profiles across isolated Chromium processes and merges their manifests deterministically
+- `tests/test_firefox_profiles.py` — focused Firefox checks for the postal animation, consistent key labels, and encryption-story layouts at five representative viewports
+- `scripts/run_visual_tests.py` — parallel visual-test runner that shards profiles across isolated browser processes and merges their manifests deterministically
 
 Previous multilingual builds are preserved locally under the ignored `backups/` directory. Neither the archives nor the superseded localisation runtime files are included in the public repository.
 
 ## Testing
 
-The test suite uses the system-installed Chromium, so it does not download a separate browser build.
+The Chromium suites use the system-installed browser. The focused Firefox suite uses Playwright's tested Firefox build, which must be installed once after the Python dependencies.
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
+.venv/bin/python -m playwright install firefox
 .venv/bin/python -m unittest tests/test_site.py -v
 .venv/bin/python -m unittest tests/test_mobile_profiles.py -v
 .venv/bin/python -m unittest tests/test_desktop_profiles.py -v
+.venv/bin/python -m unittest tests/test_firefox_profiles.py -v
 ```
 
-The two visual suites run in isolated parallel processes. Mobile testing uses up to eight workers by default; desktop testing uses five because it currently has five profiles. The worker count can be lowered on memory-constrained machines:
+The three visual suites run in isolated parallel processes. Mobile testing uses up to eight workers by default; desktop and Firefox testing use five because they currently have five profiles each. The worker count can be lowered on memory-constrained machines:
 
 ```bash
 .venv/bin/python scripts/run_visual_tests.py all
 .venv/bin/python scripts/run_visual_tests.py mobile --workers 2
 ```
 
-Each process owns its Playwright driver, Chromium instance, loopback server, and disjoint profile shard. This avoids sharing Playwright's synchronous API across threads. Shard manifests are merged atomically in profile order only after every process succeeds. The runner also writes a `review.html` gallery that groups every viewport by screenshot state, so visual comparisons can be reviewed as batches instead of one image at a time.
+Each process owns its Playwright driver, browser instance, loopback server, and disjoint profile shard. This avoids sharing Playwright's synchronous API across threads. Shard manifests are merged atomically in profile order only after every process succeeds. The runner also writes a `review.html` gallery that groups every viewport by screenshot state, so visual comparisons can be reviewed as batches instead of one image at a time.
 
 The mobile-profile run writes ignored artifacts to `test-artifacts/mobile/`: top-of-page, the hero envelope’s open state, paused-motion header, action cards, both phases of mail step 2, the redesigned service-inspection and before-sealing mail scenes, all four encryption stories, rare-result magnification, mass-surveillance mode, the filtered help directory, the selected vote, and the safeguards for every unique viewport. It also measures label containment in every encryption story. `manifest.json` records the tested state, screenshot paths, font-size floors, overlap clearances, encryption-story margins, horizontal overflow, and browser errors. These generated artifacts are intentionally excluded from Git.
 
 The desktop-profile run applies the same stateful visual review to the documented 1024, 1366, 1440, 1920, and 2560-pixel desktop widths, captures all four encryption modes plus navigation, institution, and voting states, and rejects black/compositor-corrupted frames. Its ignored screenshots and analysis manifest are written to `test-artifacts/desktop/`.
+
+The focused Firefox run freezes every meaningful hero-envelope keyframe at five representative viewports, verifies that the label remains inside the animated paper, confirms that the recipient key never travels back to the service, and captures the postal legend plus all four encryption modes. Its ignored screenshots and manifest are written to `test-artifacts/firefox/`.
 
 ## Feedback
 

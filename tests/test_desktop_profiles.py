@@ -191,17 +191,12 @@ class ChromiumDesktopProfileTests(unittest.TestCase):
                       const keyCard = story.querySelector('.mail-e2ee-key');
                       keyCard.style.opacity = phase === 'recipient-key' ? '1' : '0';
                       keyCard.style.transform = 'none';
-                      story.querySelector('.mail-e2ee-key-traveller').style.opacity = '0';
                     }""", "no-key")
                     capture("mail_no_key", "04-mail-no-key.jpg", "mail-story .interactive-card")
                     page.evaluate("""() => {
                       const story = document.querySelector('mail-story');
                       story.querySelector('.mail-e2ee-no-key').style.opacity = '0';
                       story.querySelector('.mail-e2ee-key').style.opacity = '1';
-                      story.querySelector('.mail-object').classList.add('is-open');
-                      story.querySelector('.mail-envelope-flap').style.transform = 'scaleY(-1)';
-                      story.querySelector('.mail-note').style.transform = 'translateY(-76px) rotate(-2deg)';
-                      story.querySelector('.mail-lock').style.opacity = '.3';
                     }""")
                     capture("mail_recipient_key", "05-mail-recipient-key.jpg", "mail-story .interactive-card")
                     page.locator('mail-story [data-step="2"]').click()

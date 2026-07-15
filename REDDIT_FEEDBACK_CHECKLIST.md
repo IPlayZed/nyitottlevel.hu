@@ -40,19 +40,19 @@ Reddit references: [missing opposing arguments](https://www.reddit.com/r/hungary
 
 ## Postal analogy and technical explanations
 
-- [ ] Define one consistent mapping between a letter, envelope, message content, encryption, key, sender, recipient, provider, and authority.
-- [ ] Stop switching between letters, files, images, and generic data without an explicit transition.
-- [ ] Decide whether the encryption story uses a sealed envelope alone or a “special envelope plus matching opener” metaphor.
-- [ ] If keys remain in the metaphor, explain once why a physical key appears in an envelope story.
-- [ ] Keep technical terms such as ciphertext outside the primary analogy or reveal them only in an optional technical note.
-- [ ] Review every mail-story step for contradictions between the illustration and its explanation.
-- [ ] Review the provider-key storage story against the final postal metaphor.
-- [ ] Review the user-key storage story against the final postal metaphor.
-- [ ] Review the E2EE story against the final postal metaphor.
+- [x] Define one consistent mapping between a letter, envelope, message content, encryption, key, sender, recipient, provider, and authority.
+- [x] Stop switching between letters, files, images, and generic data without an explicit transition.
+- [x] Decide whether the encryption story uses a sealed envelope alone or a “special envelope plus matching opener” metaphor.
+- [x] If keys remain in the metaphor, explain once why a physical key appears in an envelope story.
+- [x] Keep technical terms such as ciphertext outside the primary analogy or reveal them only in an optional technical note.
+- [x] Review every mail-story step for contradictions between the illustration and its explanation.
+- [x] Review the provider-key storage story against the final postal metaphor.
+- [x] Review the user-key storage story against the final postal metaphor.
+- [x] Review the E2EE story against the final postal metaphor.
 - [ ] Replace or rework the postal-stamp analogy for hashing if it conflicts with the sealed-envelope model.
 - [ ] Evaluate a photograph-versus-copy analogy for exact and perceptual hashing.
 - [ ] Explain explicitly that a hash or perceptual fingerprint can be compared without being the original image itself.
-- [ ] Re-test the redesigned analogies with a layperson reviewer who has not read the technical report.
+- [x] Re-test the redesigned analogies with a layperson reviewer who has not read the technical report.
 
 Reddit reference: [detailed analogy critique](https://www.reddit.com/r/hungary/comments/1uwniq2/k%C3%A9sz%C3%ADtettem_magyarul_egy_bemutat%C3%B3_oldalt_a_chat/oxl8941/)
 
@@ -106,6 +106,8 @@ Reddit reference: [Markdown usability and wording criticism](https://www.reddit.
 - [x] Redesign the postman’s hand-held object or pose so it cannot look like inhaling from a fuel can.
 - [x] Inspect the postman at every animation keyframe, not only the resting frame.
 - [x] Verify that the revised postman still reads clearly at 320 px width.
+- [x] Keep the hero message label inside its envelope throughout the Firefox animation keyframes.
+- [x] Keep the recipient-key card separate from the locked envelope and postman at every supported mobile viewport.
 - [x] Preserve the existing color palette unless a contrast or accessibility test requires a change.
 - [x] Re-run reduced-motion checks after changing the animation.
 - [x] Re-run all mobile and desktop screenshot states after changing the character.
