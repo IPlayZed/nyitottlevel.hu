@@ -16,11 +16,11 @@ Use this file as the implementation checklist. Complete an item by changing `[ ]
 
 ## Editorial balance and fast orientation
 
-- [ ] Add a directly linkable “Common misconceptions” section for visitors who will not read the full page.
-- [ ] Address the claim “I have nothing to hide.”
-- [ ] Address the claim “Only criminals are affected.”
-- [ ] Address the claim “Providers already read every message anyway.”
-- [ ] Address the claim “Encryption and mathematics can simply be banned.”
+- [x] Add a directly linkable “Common misconceptions” section for visitors who will not read the full page.
+- [x] Address the claim “I have nothing to hide.”
+- [x] Address the claim “Only criminals are affected.”
+- [x] Address the claim “Providers already read every message anyway.”
+- [x] Address the claim “Encryption and mathematics can simply be banned.”
 - [ ] Explain the distinction between technically preventing encryption and legally restricting or selectively enforcing its use.
 - [ ] Present the strongest good-faith case for the proposed regulation before responding to it.
 - [ ] Explain why detecting smaller-scale offenders and grooming can matter, not only catching sophisticated “big fish.”
@@ -73,6 +73,7 @@ Reddit reference: [request to include and contextualize the first July vote](htt
 
 ## Help and research directory
 
+- [ ] Fix the connection-route layout around 539 px wide: the vertical gold connector must not cover the route-card text.
 - [ ] Re-audit every organization in the “Who can I contact or research?” directory.
 - [ ] State whether each organization offers individual help, accepts complaints, conducts research, advocates, or merely publishes official material.
 - [ ] Re-check whether NAIH is relevant to each scenario described, including cases where processing is explicitly authorized by law.

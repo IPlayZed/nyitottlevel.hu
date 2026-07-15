@@ -61,7 +61,7 @@ class SiteTests(unittest.TestCase):
         self.assertGreaterEqual(float(self.page.evaluate("parseFloat(getComputedStyle(document.querySelector('.risk-grid p')).fontSize)")), 15)
         overflow = self.page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
         self.assertLessEqual(overflow, 1)
-        self.assertEqual(self.page.locator("main > section").count(), 12)
+        self.assertEqual(self.page.locator("main > section").count(), 13)
         self.assertEqual(self.page.locator("[data-language-toggle]").count(), 0)
         self.assertEqual(self.page.locator('script[src^="locales/"]').count(), 0)
         self.assertEqual(self.page.locator('script[src="full-i18n.js"]').count(), 0)
@@ -71,7 +71,9 @@ class SiteTests(unittest.TestCase):
     def test_header_subsections_have_real_targets_and_mobile_groups(self):
         self.assertEqual(self.page.locator(".desktop-nav .nav-group").count(), 4)
         self.assertEqual(self.page.locator(".desktop-nav .nav-submenu a").count(), 12)
+        self.assertEqual(self.page.locator('.desktop-nav > a.nav-direct[href="#gyakori-tevhitek"]').count(), 1)
         self.assertEqual(self.page.locator("#mobileNav .mobile-nav__group").count(), 4)
+        self.assertEqual(self.page.locator('#mobileNav > a.mobile-nav__shortcut[href="#gyakori-tevhitek"]').count(), 1)
         missing_targets = self.page.evaluate(
             """() => [...document.querySelectorAll('.desktop-nav a[href^="#"], #mobileNav a[href^="#"]')]
               .map(link => link.getAttribute('href'))
@@ -79,6 +81,58 @@ class SiteTests(unittest.TestCase):
               .filter(href => !document.querySelector(href))"""
         )
         self.assertEqual(missing_targets, [])
+
+    def test_common_misconceptions_are_linkable_balanced_and_sourced(self):
+        section = self.page.locator("#gyakori-tevhitek")
+        self.assertTrue(section.is_visible())
+        self.assertEqual(section.locator(".misconception-card").count(), 4)
+
+        expected_ids = (
+            "nincs-mit-rejtegetnem",
+            "csak-bunozoket-erint",
+            "minden-uzenetet-olvasnak",
+            "titkositas-betiltasa",
+        )
+        for card_id in expected_ids:
+            with self.subTest(card=card_id):
+                card = section.locator(f"#{card_id}")
+                self.assertTrue(card.is_visible())
+                self.assertEqual(card.locator(".section-anchor").get_attribute("href"), f"#{card_id}")
+                self.assertIn("Röviden:", card.inner_text())
+
+        copy = section.inner_text().lower()
+        self.assertIn("a magánszféra nem a bűnösség jele", copy)
+        self.assertIn("meghatározott szolgáltatásra és kockázattípusra", copy)
+        self.assertIn("nem minden szolgáltató fér hozzá minden üzenethez", copy)
+        self.assertIn("a jog korlátozhatja a titkosítás használatát", copy)
+
+        external_sources = section.locator('.misconception-sources a[target="_blank"]')
+        self.assertEqual(external_sources.count(), 6)
+        for link in external_sources.all():
+            self.assertTrue(link.get_attribute("href").startswith("https://"))
+            self.assertIn("noreferrer", link.get_attribute("rel") or "")
+        self.assertEqual(section.locator('.misconception-sources a[href="#posta"]').count(), 1)
+
+        self.page.set_viewport_size({"width": 320, "height": 720})
+        self.page.goto(f"{self.base_url}/#gyakori-tevhitek", wait_until="networkidle")
+        overflow = self.page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
+        self.assertLessEqual(overflow, 1)
+        self.assertEqual(section.locator(".misconception-card").count(), 4)
+
+        self.page.set_viewport_size({"width": 834, "height": 900})
+        self.page.goto(f"{self.base_url}/#gyakori-tevhitek", wait_until="networkidle")
+        clipped_heading_children = self.page.evaluate(
+            """() => {
+              const heading = document.querySelector('.misconceptions-heading');
+              const bounds = heading.getBoundingClientRect();
+              return [...heading.children].map(child => {
+                const rect = child.getBoundingClientRect();
+                return {left: rect.left, right: rect.right};
+              }).filter(rect => rect.left < bounds.left - 1 || rect.right > bounds.right + 1);
+            }"""
+        )
+        self.assertEqual(clipped_heading_children, [])
+        self.assertLessEqual(section.evaluate("element => element.scrollWidth - element.clientWidth"), 1)
 
     def test_public_feedback_and_license_links_are_explicit(self):
         feedback_url = "https://github.com/IPlayZed/nyitottlevel.hu/issues/new?template=feedback_hu.yml"
